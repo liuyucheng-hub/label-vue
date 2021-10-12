@@ -1,17 +1,25 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <Label v-bind:width="width"
+           v-bind:height="height"
+           v-bind:img-url="imgUrl"/>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import Label from './components/Label.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    Label
+  },
+  data: function () {
+    return {
+      width: 1000,
+      height: 800,
+      imgUrl: 'http://127.0.0.1:8887/cat.jpg',
+    }
   }
 }
 </script>
