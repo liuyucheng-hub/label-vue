@@ -1,10 +1,14 @@
 <template>
-
+  <g/>
 </template>
 
 <script>
 export default {
-  name: "mouse-point"
+  name: "rectangle",
+
+  props: {
+    metaData: Object,
+  },
 }
 </script>
 

@@ -1,18 +1,18 @@
 <template>
   <div id="app">
-    <Label v-bind:width="width"
-           v-bind:height="height"
-           v-bind:img-url="imgUrl"/>
+    <label-vue v-bind:width="width"
+               v-bind:height="height"
+               v-bind:img-url="imgUrl"/>
   </div>
 </template>
 
 <script>
-import Label from './components/Label.vue'
+import LabelVue from './components/LabelVue/LabelVue.vue'
 
 export default {
   name: 'App',
   components: {
-    Label
+    LabelVue
   },
   data: function () {
     return {

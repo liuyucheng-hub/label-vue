@@ -1,10 +1,14 @@
 <template>
-  <svg height="800" width="1000"/>
+  <g/>
 </template>
 
 <script>
 export default {
-  name: "board"
+  name: "polygon",
+
+  props: {
+    metaData: Object,
+  },
 }
 </script>
 

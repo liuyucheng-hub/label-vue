@@ -1,10 +1,14 @@
 <template>
-
+  <g/>
 </template>
 
 <script>
 export default {
-  name: "polygon"
+  name: "circle",
+
+  props: {
+    metaData: Object,
+  },
 }
 </script>
 
