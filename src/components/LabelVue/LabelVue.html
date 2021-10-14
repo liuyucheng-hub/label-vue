@@ -1,7 +1,7 @@
 <div v-bind:style="{width: width + 'px', height: height + 'px', textAlign: 'left'}"
-     class="label-vue">
+     id="label-vue">
     <!--  工具栏  -->
-    <div>
+    <div id="label-vue-tool-bar">
         <button v-on:click.stop="onCreateRectangle">Create Rectangle</button>
         <button v-on:click.stop="onCreatePolygon">Create Polygon</button>
         <button v-on:click.stop="onCreateLine">Create Line</button>
@@ -25,25 +25,34 @@ Delete: delete">帮助
     </div>
 
     <!--  编辑窗  -->
-    <div v-on:click="onMouseClick"
-         v-on:mousemove="onMousemove">
+    <div id="label-vue-editor"
+         v-on:click="onMouseClick"
+         v-on:mousemove="onMousemove"
+         v-on:dblclick="onMouseDoubleClick">
         <!--  背景板   -->
         <!--      <img v-bind:src="imgUrl"  alt=""/>-->
         <!--  画板   -->
         <svg v-bind:height="height"
              v-bind:width="width">
-            <label-line v-on:complete="onComplete"
+            <label-line-strip v-on:complete="onComplete"
                         v-on:graphClick="onGraphClick"
                         v-on:pointClick="onPointClick"
+                        v-on:pointDragStart="onPointDragStart"
+                        v-on:pointDragEnd="onPointDragEnd"
                         v-for="item of lines"
                         v-bind:meta-data="item"
-                        v-bind:edit-model="isEditModel"
-                        v-bind:create-model="isCreateModel"
-                        v-bind:key="item.key"/>
+                        v-bind:key="item.key"
+                        v-bind:max-point="2"/>
 
-            <label-line-strip v-for="item of lineStrips"
+            <label-line-strip v-on:complete="onComplete"
+                              v-on:graphClick="onGraphClick"
+                              v-on:pointClick="onPointClick"
+                              v-on:pointDragStart="onPointDragStart"
+                              v-on:pointDragEnd="onPointDragEnd"
+                              v-for="item of lineStrips"
                               v-bind:meta-data="item"
-                              v-bind:key="item.key"/>
+                              v-bind:key="item.key"
+                              v-bind:max-point="1000"/>
 
             <label-circle v-for="item of circles"
                           v-bind:meta-data="item"

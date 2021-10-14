@@ -1,19 +1,18 @@
 <template>
   <g>
-    <polyline stroke="orange"
-              stroke-width="1"
-              v-on:click="onGraphClick()"
-              v-bind:points="points"/>
+    <polyline v-on:click="onGraphClick"
+              v-bind:points="displayPointCoordinates"
+              v-bind:class="{'label-vue-not-complete': !metaData.complete, 'select':metaData.select}"/>
 
-    <!--    <circle v-bind:cx="p1.x"-->
-    <!--            v-bind:cy="p1.y"-->
-    <!--            v-on:click="onPointClick(p1.key)"-->
-    <!--            r="2" stroke="red" stroke-width="1"/>-->
-
-    <!--    <circle v-bind:cx="p2.x"-->
-    <!--            v-bind:cy="p2.y"-->
-    <!--            v-on:click="onPointClick(p2.key)"-->
-    <!--            r="2" stroke="red" stroke-width="1"/>-->
+    <circle v-for="item of displayPoints"
+            v-bind:cx="item.x"
+            v-bind:cy="item.y"
+            v-bind:key="item.key"
+            v-on:click="onPointClick(item.key)"
+            v-on:mousedown="onPointMousedown($event, item.key)"
+            v-on:mouseup="onPointMouseUp($event, item.key)"
+            v-bind:class="{'label-vue-not-complete': !metaData.complete, 'select':metaData.select}"
+            r="4"/>
   </g>
 </template>
 
@@ -23,32 +22,41 @@ export default {
   components: {},
   props: {
     metaData: Object,
+    maxPoint: Number,
   },
 
   computed: {
-    points: [30, 60, 60, 60],
-    // p1: function () {
-    //   if (this.metaData.points !== null &&
-    //       this.metaData.points !== undefined &&
-    //       this.metaData.points.length > 0) {
-    //     return this.metaData.points[0];
-    //   } else {
-    //     return {x: 0, y: 0}
-    //   }
-    // },
-    // p2: function () {
-    //   if (this.metaData.points !== null &&
-    //       this.metaData.points !== undefined &&
-    //       this.metaData.points.length > 1) {
-    //     this.$emit("complete", this.metaData.key);
-    //     return this.metaData.points[1];
-    //   } else if (this.metaData.position !== null &&
-    //       this.metaData.position !== undefined) {
-    //     return this.metaData.position;
-    //   } else {
-    //     return {x: 0, y: 0}
-    //   }
-    // },
+    displayPoints: function () {
+      let res = [];
+      if (this.metaData.points !== null &&
+          this.metaData.points !== undefined) {
+        res.push(...this.metaData.points)
+      }
+
+      // 已完成状态
+      if (this.metaData.complete) {
+        return res;
+      }
+      if (res.length >= this.maxPoint) {
+        this.$emit("complete", this.metaData.key);
+        return res;
+      }
+
+      // 未完成状态
+      // 预览鼠标位置的下一个节点
+      if (this.metaData.position !== null &&
+          this.metaData.position !== undefined) {
+        res.push(this.metaData.position)
+      }
+      return res;
+    },
+    displayPointCoordinates: function () {
+      let coordinates = [];
+      this.displayPoints.forEach(item => {
+        coordinates.push(item.x, item.y);
+      })
+      return coordinates;
+    },
   },
 
   methods: {
@@ -59,6 +67,19 @@ export default {
     // 点选中
     onPointClick: function (pointKey) {
       this.$emit("pointClick", this.metaData.key, pointKey)
+    },
+    // 鼠标down
+    onPointMousedown: function (event, pointKey) {
+      if (event.ctrlKey) {
+        this.$emit("pointDragStart", this.metaData.key, pointKey)
+      } else {
+        this.$emit("pointClick", this.metaData.key, pointKey)
+      }
+    },
+    onPointMouseUp: function (event, pointKey) {
+      if (event.ctrlKey) {
+        this.$emit("pointDragEnd", this.metaData.key, pointKey)
+      }
     },
   }
 }

@@ -1,5 +1,4 @@
 <script>
-import LabelLine from "../LabelLine.vue";
 import LabelLineStrip from "../LabelLineStrip.vue";
 import LabelCircle from "../LabelCircle.vue";
 import LabelRectangle from "../LabelRectangle.vue";
@@ -9,7 +8,6 @@ import LabelPolygon from "../LabelPolygon.vue";
 export default {
   name: "label-vue",
   components: {
-    LabelLine,
     LabelLineStrip,
     LabelCircle,
     LabelRectangle,
@@ -65,7 +63,11 @@ export default {
   },
 
   methods: {
-    // 鼠标移动处理
+
+    /**
+     * 鼠标移动处理
+     * @param event
+     */
     onMousemove: function (event) {
       if (this.isCreateModel) {
         this.onMouseMoveForCreateModel(event);
@@ -74,32 +76,33 @@ export default {
       }
     },
     onMouseMoveForCreateModel: function (event) {
-      if (this.selectGraph === null ||
-          this.selectGraph === undefined) {
-        return;
+      if (this.selectGraph !== null &&
+          this.selectGraph !== undefined) {
+        this.syncPosition(this.selectGraph.position, event)
       }
-      this.selectGraph.position.x = event.offsetX;
-      this.selectGraph.position.y = event.offsetY;
     },
     onMouseMoveForEditModel: function (event) {
       // dragPoint优先
-      if (this.dragPoint !== null && this.dragPoint !== undefined) {
-        this.dragPoint.x = event.offsetX;
-        this.dragPoint.y = event.offsetY;
+      if (this.dragPoint !== null &&
+          this.dragPoint !== undefined) {
+        this.syncPosition(this.dragPoint, event)
+
       }
-      if (this.dragGraph !== null && this.dragGraph !== undefined) {
-        this.dragGraph.position.x = event.offsetX;
-        this.dragGraph.position.y = event.offsetY;
-      }
+      // if (this.dragGraph !== null &&
+      //     this.dragGraph !== undefined) {
+      //   this.syncPosition(this.dragGraph.position, event)
+      // }
     },
 
-    // 鼠标点击处理
+    /**
+     * 鼠标点击处理
+     * @param event
+     */
     onMouseClick: function (event) {
       if (this.isCreateModel) {
         this.onMouseClickForCreateModel(event);
       }
     },
-
     onMouseClickForCreateModel: function (event) {
       // 创建模式下处理逻辑
       if (this.selectGraph === null ||
@@ -114,7 +117,16 @@ export default {
       }
     },
 
-    // 撤销操作处理
+    /**
+     * 鼠标双击处理
+     */
+    onMouseDoubleClick: function () {
+      this.completeSelectGraph();
+    },
+
+    /**
+     * 撤销操作处理
+     */
     onRevoke: function () {
       if (this.isCreateModel) {
         this.onRevokeForCreateModel();
@@ -127,12 +139,11 @@ export default {
           this.selectGraph === undefined) {
         return;
       }
-      // 正在创建图形
+      // 正在创建图形仅有一个点，删除当前图形，其余情况撤销最后一个点
       if (this.selectGraph.points.length > 1) {
-        // 撤销最后一个点
         this.selectGraph.points.pop()
       } else {
-        // 仅有一个点，删除当前图形
+        //
         this.deleteLastGraph(this.selectGraph.type);
       }
     },
@@ -160,19 +171,28 @@ export default {
       this.selectGraph = null;
     },
 
-    // 删除操作处理
+    /**
+     * 删除操作处理
+     */
     onDelete: function () {
       // 仅编辑模式下
       if (this.isEditModel) {
+        //todo 选中节点需要根据选中样式调整
         // 优先point
         if (this.selectPoint !== null) {
-          if (this.selectGraph.points.length === 1) {
+          // 图形只有一个节点时删除图形，有多个节点时删除对应节点
+          if (this.selectGraph.points.length <= 1) {
             this.deleteGraph(this.selectGraph);
+            this.selectGraph = null;
+          } else {
+            this.selectGraph.points =
+                this.selectGraph.points.filter(item => item.key !== this.selectPoint.key);
           }
           return;
         }
         if (this.selectGraph !== null) {
           this.deleteGraph(this.selectGraph);
+          this.selectGraph = null;
         }
       }
     },
@@ -184,7 +204,7 @@ export default {
       if (graph.type === this.graphType.line) {
         this.lines = this.lines
             .filter(item => item.key !== graph.key)
-      } else if (graph.type === this.graphType.lineStrips) {
+      } else if (graph.type === this.graphType.lineStrip) {
         this.lineStrips = this.lineStrips
             .filter(item => item.key !== graph.key)
       } else if (graph.type === this.graphType.circle) {
@@ -201,46 +221,74 @@ export default {
           .filter(item => item.key !== graph.key)
     },
 
+    // 创建线条操作处理
+    onCreateLine: function () {
+      if (this.model === this.modelType.create &&
+          this.selectCreateGraph === this.graphType.line) {
+        return;
+      }
+      this.setCreateModel(this.graphType.line)
+      this.completeSelectGraph();
+    },
+    // 创建连线操作处理
+    onCreateLineStrip: function () {
+      if (this.model === this.modelType.create &&
+          this.selectCreateGraph === this.graphType.lineStrip) {
+        return;
+      }
+      this.setCreateModel(this.graphType.lineStrip)
+      this.completeSelectGraph();
+    },
+    // 创建圆形操作处理
+    onCreateCircle: function () {
+      if (this.model === this.modelType.create &&
+          this.selectCreateGraph === this.graphType.circle) {
+        return;
+      }
+      this.setCreateModel(this.graphType.circle)
+      this.completeSelectGraph();
+    },
+    // 创建矩形操作处理
+    onCreateRectangle: function () {
+      if (this.model === this.modelType.create &&
+          this.selectCreateGraph === this.graphType.rectangle) {
+        return;
+      }
+      this.setCreateModel(this.graphType.rectangle)
+      this.completeSelectGraph();
+    },
+    // 创建多边形操作处理
+    onCreatePolygon: function () {
+      if (this.model === this.modelType.create &&
+          this.selectCreateGraph === this.graphType.polygon) {
+        return;
+      }
+      this.setCreateModel(this.graphType.polygon)
+      this.completeSelectGraph();
+    },
     // 编辑操作处理
     onEdit: function () {
+      this.setEditModel();
+      this.completeSelectGraph();
+    },
+    // 保存操作处理
+    onSave: function () {
+      this.completeSelectGraph();
+      console.log(this.graphs);
+    },
+    setCreateModel: function (graphType) {
+      this.model = this.modelType.create;
+      this.selectCreateGraph = graphType;
+    },
+    setEditModel: function () {
       this.model = this.modelType.edit;
       this.selectCreateGraph = null;
     },
 
-    // 创建线条操作处理
-    onCreateLine: function () {
-      this.model = this.modelType.create;
-      this.selectCreateGraph = this.graphType.line;
-    },
-
-    // 创建连线操作处理
-    onCreateLineStrip: function () {
-      this.model = this.modelType.create;
-      this.selectCreateGraph = this.graphType.lineStrip;
-    },
-
-    // 创建圆形操作处理
-    onCreateCircle: function () {
-      this.model = this.modelType.create;
-      this.selectCreateGraph = this.graphType.circle;
-    },
-
-    // 创建矩形操作处理
-    onCreateRectangle: function () {
-      this.model = this.modelType.create;
-      this.selectCreateGraph = this.graphType.rectangle;
-    },
-
-    // 创建多边形操作处理
-    onCreatePolygon: function () {
-      this.model = this.modelType.create;
-      this.selectCreateGraph = this.graphType.polygon;
-    },
-
-    onComplete: function () {
-      this.selectGraph = null;
-    },
-
+    /**
+     * 图形点击事件处理
+     * @param graphKey
+     */
     onGraphClick: function (graphKey) {
       if (this.isCreateModel) {
         return;
@@ -252,12 +300,15 @@ export default {
         return;
       }
 
-      if (this.selectGraph !== null && this.selectGraph !== undefined) {
-        this.selectGraph.select = false;
-      }
+      this.clearSelectGraph();
+      matchGraph.select = true;
       this.selectGraph = matchGraph;
-      this.selectGraph.select = true;
     },
+    /**
+     * 图形的连接点点击事件处理
+     * @param graphKey
+     * @param pointKey
+     */
     onPointClick: function (graphKey, pointKey) {
       if (this.isCreateModel) {
         return;
@@ -275,23 +326,93 @@ export default {
         return;
       }
 
-      if (this.selectGraph !== null && this.selectGraph !== undefined) {
+      this.clearSelectGraph();
+      matchGraph.select = true;
+      this.selectGraph = matchGraph;
+      matchPoint.select = true;
+      this.selectPoint = matchPoint;
+    },
+
+    // 图形连接点开始拖动事件处理
+    onPointDragStart: function (graphKey, pointKey) {
+      if (this.isCreateModel) {
+        return;
+      }
+
+      let matchGraph = this.graphs
+          .find(item => item.key === graphKey);
+      if (matchGraph === null || matchGraph === undefined) {
+        return;
+      }
+
+      let matchPoint = matchGraph.points
+          .find(item => item.key === pointKey);
+      if (matchPoint === null || matchPoint === undefined) {
+        return;
+      }
+
+      this.dragGraph = matchGraph;
+      this.dragPoint = matchPoint;
+    },
+
+    // 图形连接点开始拖动事件处理
+    onPointDragEnd: function (graphKey, pointKey) {
+      if (this.isCreateModel) {
+        return;
+      }
+
+      let matchGraph = this.graphs
+          .find(item => item.key === graphKey);
+      if (matchGraph === null || matchGraph === undefined) {
+        return;
+      }
+
+      let matchPoint = matchGraph.points
+          .find(item => item.key === pointKey);
+      if (matchPoint === null || matchPoint === undefined) {
+        return;
+      }
+
+      this.dragGraph = null;
+      this.dragPoint = null;
+    },
+
+    /**
+     * 图形新建完成事件处理
+     */
+    onComplete: function () {
+      this.completeSelectGraph();
+    },
+    /**
+     * 1.将当前图形设置为完成
+     * 2.清除已选择图形、连接点
+     */
+    completeSelectGraph: function () {
+      if (this.selectGraph !== null) {
+        this.selectGraph.complete = true;
+      }
+      this.clearSelectGraph();
+    },
+    /**
+     * 清除已选择图形、连接点
+     */
+    clearSelectGraph: function () {
+      if (this.selectGraph !== null &&
+          this.selectGraph !== undefined) {
         this.selectGraph.select = false;
       }
-      this.selectGraph = matchGraph;
-      this.selectGraph.select = true;
-      if (this.selectPoint !== null && this.selectPoint !== undefined) {
+      if (this.selectPoint !== null &&
+          this.selectPoint !== undefined) {
         this.selectPoint.select = false;
       }
-      this.selectPoint = matchPoint;
-      this.selectPoint.select = true;
+      this.selectGraph = null;
+      this.selectPoint = null;
     },
 
-    onSave: function () {
-      console.log(this.graphs);
-    },
-
-    // 新创建图形
+    /**
+     * 新创建图形
+     * @param event
+     */
     genNewGraph: function (event) {
       if (this.selectCreateGraph === this.graphType.line) {
         const newLine = this.genNewLine(event);
@@ -320,12 +441,12 @@ export default {
         this.graphs.push(newPolygon)
       }
     },
-
     genNewLine: function (event) {
       return {
         key: this.getNextKey(),
         type: 'line',
         select: false,
+        complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
       }
@@ -335,6 +456,7 @@ export default {
         key: this.getNextKey(),
         type: 'lineStrip',
         select: false,
+        complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
       }
@@ -344,6 +466,7 @@ export default {
         key: this.getNextKey(),
         type: 'circle',
         select: false,
+        complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
       }
@@ -353,6 +476,7 @@ export default {
         key: this.getNextKey(),
         type: 'rectangle',
         select: false,
+        complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
       }
@@ -362,23 +486,34 @@ export default {
         key: this.getNextKey(),
         type: 'polygon',
         select: false,
+        complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
       }
     },
     genPoint: function (event) {
-      return {
+      let p = {
         key: this.getNextKey(),
         select: false,
-        x: event.offsetX,
-        y: event.offsetY
-      };
+      }
+      this.syncPosition(p, event)
+
+      return p;
+    },
+    syncPosition(position, event) {
+      position.x = event.offsetX;
+      position.y = event.offsetY;
     },
     getNextKey: function () {
       this.key = this.key + 1;
       return this.key;
     },
-    // hotKey事件处理
+
+
+    /**
+     * hotKey事件处理
+     * @param event
+     */
     hotKeyHandler: function (event) {
       // Delete: 删除操作
       // ctrl+z: 撤销操作
@@ -436,4 +571,4 @@ export default {
 </script>
 
 <template src="./LabelVue.html"></template>
-<style scoped src="./LabelVue.css"></style>
+<style src="./LabelVue.css"></style>
