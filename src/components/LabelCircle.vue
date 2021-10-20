@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: "circle",
+  name: "label-circle",
 
   props: {
     metaData: Object,
@@ -12,6 +12,4 @@ export default {
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

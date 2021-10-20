@@ -19,11 +19,11 @@ circle.label-vue-not-complete {
     fill: greenyellow;
 }
 
-polyline.select, polyline:hover {
+polyline.label-vue-select, polyline:hover {
     stroke: red;
 }
 
-circle.select, circle:hover {
+circle.label-vue-select, circle:hover {
     stroke: red;
     fill: red;
 }

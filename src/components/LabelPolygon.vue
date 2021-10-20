@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: "polygon",
+  name: "label-polygon",
 
   props: {
     metaData: Object,
@@ -12,6 +12,4 @@ export default {
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

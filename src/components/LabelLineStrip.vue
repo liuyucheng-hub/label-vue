@@ -1,31 +1,46 @@
 <template>
   <g>
-    <polyline v-on:click="onGraphClick"
-              v-bind:points="displayPointCoordinates"
-              v-bind:class="{'label-vue-not-complete': !metaData.complete, 'select':metaData.select}"/>
+    <polyline v-bind:points="displayPointCoordinates"
+              v-bind:class="classObject"
+              v-on:click="onGraphClick"/>
 
-    <circle v-for="item of displayPoints"
+    <circle r="4"
+            v-for="item of displayPoints"
             v-bind:cx="item.x"
             v-bind:cy="item.y"
             v-bind:key="item.key"
+            v-bind:class="classObject"
             v-on:click="onPointClick(item.key)"
             v-on:mousedown="onPointMousedown($event, item.key)"
-            v-on:mouseup="onPointMouseUp($event, item.key)"
-            v-bind:class="{'label-vue-not-complete': !metaData.complete, 'select':metaData.select}"
-            r="4"/>
+            v-on:mouseup="onPointMouseUp($event, item.key)"/>
   </g>
 </template>
 
 <script>
 export default {
   name: "label-line-strip",
-  components: {},
+
   props: {
+    // 图形的元数据
     metaData: Object,
+    // 图形支持的最大节点数，当>=maxPoint时完成图形创建
     maxPoint: Number,
   },
 
   computed: {
+    /**
+     * class数据
+     */
+    classObject: function () {
+      return {
+        'label-vue-not-complete': !this.metaData.complete,
+        'label-vue-select': this.metaData.select
+      }
+    },
+
+    /**
+     * 连接点对象
+     */
     displayPoints: function () {
       let res = [];
       if (this.metaData.points !== null &&
@@ -50,6 +65,10 @@ export default {
       }
       return res;
     },
+
+    /**
+     * 连接点对象的坐标数据
+     */
     displayPointCoordinates: function () {
       let coordinates = [];
       this.displayPoints.forEach(item => {
@@ -60,15 +79,23 @@ export default {
   },
 
   methods: {
-    // 图形选中
+    /**
+     * 图形选中事件处理
+     */
     onGraphClick: function () {
       this.$emit("graphClick", this.metaData.key)
     },
-    // 点选中
+
+    /**
+     * 连接点选中事件处理
+     */
     onPointClick: function (pointKey) {
       this.$emit("pointClick", this.metaData.key, pointKey)
     },
-    // 鼠标down
+
+    /**
+     * 按下鼠标左键事件处理
+     */
     onPointMousedown: function (event, pointKey) {
       if (event.ctrlKey) {
         this.$emit("pointDragStart", this.metaData.key, pointKey)
@@ -76,6 +103,10 @@ export default {
         this.$emit("pointClick", this.metaData.key, pointKey)
       }
     },
+
+    /**
+     * 松开鼠标左键事件处理
+     */
     onPointMouseUp: function (event, pointKey) {
       if (event.ctrlKey) {
         this.$emit("pointDragEnd", this.metaData.key, pointKey)
@@ -85,6 +116,4 @@ export default {
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

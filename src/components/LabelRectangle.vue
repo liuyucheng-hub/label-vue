@@ -4,7 +4,7 @@
 
 <script>
 export default {
-  name: "rectangle",
+  name: "label-rectangle",
 
   props: {
     metaData: Object,

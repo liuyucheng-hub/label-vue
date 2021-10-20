@@ -1,67 +1,75 @@
-<div v-bind:style="{width: width + 'px', height: height + 'px', textAlign: 'left'}"
-     id="label-vue">
-    <!--  工具栏  -->
+<div id="label-vue"
+     v-bind:style="{width: width + 'px', height: height + 'px', textAlign: 'left'}">
+
+    <!--工具栏-->
     <div id="label-vue-tool-bar">
-        <button v-on:click.stop="onCreateRectangle">Create Rectangle</button>
-        <button v-on:click.stop="onCreatePolygon">Create Polygon</button>
-        <button v-on:click.stop="onCreateLine">Create Line</button>
-        <button v-on:click.stop="onCreateLineStrip">Create LineStrip</button>
-        <button v-on:click.stop="onCreateCircle">Create Circle</button>
-        <button v-on:click.stop="onEdit">Edit</button>
-        <button v-on:click.stop="onRevoke">Revoke</button>
-        <button v-on:click.stop="onDelete">Delete</button>
-        <button v-on:click.stop="onSave">Save</button>
-        <button v-on:click.stop="onSave"
-                title="
-Create Rectangle:alt+1
-Create Polygon: alt+2
-Create Line: alt+3
-Create LineStrip: alt+4
-Create Circle: alt+5
-Edit: alt+`
-Revoke: ctrl+z
-Delete: delete">帮助
+        <button v-on:click.stop="onCreateRectangle">创建矩形</button>
+        <button v-on:click.stop="onCreatePolygon">创建多边形</button>
+        <button v-on:click.stop="onCreateLine">创建线条</button>
+        <button v-on:click.stop="onCreateLineStrip">创建连线</button>
+        <button v-on:click.stop="onCreateCircle">创建圆形</button>
+        <button v-on:click.stop="onEdit">编辑图形</button>
+        <button v-on:click.stop="onRevoke">撤销</button>
+        <button v-on:click.stop="onDelete">删除</button>
+        <button v-on:click.stop="onSave">保存</button>
+        <button title="
+创建矩形:alt+1
+创建多边形: alt+2
+创建线条: alt+3
+创建连线: alt+4
+创建圆形: alt+5
+编辑图形: alt+`
+撤销: ctrl+z
+删除: delete">帮助
         </button>
     </div>
 
-    <!--  编辑窗  -->
+    <!--编辑窗-->
     <div id="label-vue-editor"
          v-on:click="onMouseClick"
          v-on:mousemove="onMousemove"
          v-on:dblclick="onMouseDoubleClick">
-        <!--  背景板   -->
+
+        <!--背景板-->
         <!--      <img v-bind:src="imgUrl"  alt=""/>-->
-        <!--  画板   -->
+
+        <!--画板-->
         <svg v-bind:height="height"
              v-bind:width="width">
-            <label-line-strip v-on:complete="onComplete"
-                        v-on:graphClick="onGraphClick"
-                        v-on:pointClick="onPointClick"
-                        v-on:pointDragStart="onPointDragStart"
-                        v-on:pointDragEnd="onPointDragEnd"
-                        v-for="item of lines"
-                        v-bind:meta-data="item"
-                        v-bind:key="item.key"
-                        v-bind:max-point="2"/>
+            <!--线条图形-->
+            <label-line-strip v-for="item of lines"
+                              v-bind:meta-data="item"
+                              v-bind:key="item.key"
+                              v-bind:max-point="2"
+                              v-on:complete="onComplete"
+                              v-on:graphClick="onGraphClick"
+                              v-on:pointClick="onPointClick"
+                              v-on:pointDragStart="onPointDragStart"
+                              v-on:pointDragEnd="onPointDragEnd"/>
 
-            <label-line-strip v-on:complete="onComplete"
+            <!--连线图形-->
+            <label-line-strip v-for="item of lineStrips"
+                              v-bind:meta-data="item"
+                              v-bind:key="item.key"
+                              v-bind:max-point="1000"
+                              v-on:complete="onComplete"
                               v-on:graphClick="onGraphClick"
                               v-on:pointClick="onPointClick"
                               v-on:pointDragStart="onPointDragStart"
                               v-on:pointDragEnd="onPointDragEnd"
-                              v-for="item of lineStrips"
-                              v-bind:meta-data="item"
-                              v-bind:key="item.key"
-                              v-bind:max-point="1000"/>
+            />
 
+            <!--圆形图形-->
             <label-circle v-for="item of circles"
                           v-bind:meta-data="item"
                           v-bind:key="item.key"/>
 
+            <!--矩形图形-->
             <label-rectangle v-for="item of rectangles"
                              v-bind:meta-data="item"
                              v-bind:key="item.key"/>
 
+            <!--多边形图形-->
             <label-polygon v-for="item of polygons"
                            v-bind:meta-data="item"
                            v-bind:key="item.key"/>
