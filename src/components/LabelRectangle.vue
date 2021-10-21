@@ -14,8 +14,8 @@
             v-bind:key="item.key"
             v-bind:class="classObject"
             v-on:click="onPointClick(item.key)"
-            v-on:mousedown="onPointMousedown($event, item.key)"
-            v-on:mouseup="onPointMouseUp($event, item.key)"/>
+            v-on:mousedown="onPointMousedown(item.key)"
+            v-on:mouseup="onPointMouseUp(item.key)"/>
   </g>
 </template>
 
@@ -134,20 +134,14 @@ export default {
      * 按下鼠标左键事件处理
      */
     onPointMousedown: function (event, pointKey) {
-      if (event.ctrlKey) {
-        this.$emit("pointDragStart", this.metaData.key, pointKey)
-      } else {
-        this.$emit("pointClick", this.metaData.key, pointKey)
-      }
+      this.$emit("pointDragStart", this.metaData.key, pointKey)
     },
 
     /**
      * 松开鼠标左键事件处理
      */
     onPointMouseUp: function (event, pointKey) {
-      if (event.ctrlKey) {
-        this.$emit("pointDragEnd", this.metaData.key, pointKey)
-      }
+      this.$emit("pointDragEnd", this.metaData.key, pointKey)
     },
   },
 
