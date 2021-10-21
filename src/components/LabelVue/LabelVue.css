@@ -1,11 +1,16 @@
 polyline {
     stroke: green;
-    stroke-width: 2;
     fill: transparent;
+    stroke-width: 2;
 }
 
 polyline.label-vue-not-complete {
     stroke: greenyellow;
+}
+
+polyline.label-vue-select, polyline:hover {
+    stroke: red;
+    fill: red;
 }
 
 circle {
@@ -19,11 +24,22 @@ circle.label-vue-not-complete {
     fill: greenyellow;
 }
 
-polyline.label-vue-select, polyline:hover {
+circle.label-vue-select, circle:hover {
     stroke: red;
+    fill: red;
 }
 
-circle.label-vue-select, circle:hover {
+rect {
+    stroke: green;
+    fill: transparent;
+    stroke-width: 2;
+}
+
+rect.label-vue-not-complete {
+    stroke: greenyellow;
+}
+
+rect.label-vue-select, rect:hover {
     stroke: red;
     fill: red;
 }

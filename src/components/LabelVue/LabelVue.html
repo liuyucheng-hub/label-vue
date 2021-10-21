@@ -18,17 +18,20 @@
 创建线条: alt+3
 创建连线: alt+4
 创建圆形: alt+5
+完成创建: enter
 编辑图形: alt+`
 撤销: ctrl+z
-删除: delete">帮助
+删除: delete
+拖动连接点：ctrl+鼠标左键按下，然后移动鼠标
+增加连接点：选中连接点，然后在适当位置alt+鼠标左键点击
+">帮助
         </button>
     </div>
 
     <!--编辑窗-->
     <div id="label-vue-editor"
-         v-on:click="onMouseClick"
-         v-on:mousemove="onMousemove"
-         v-on:dblclick="onMouseDoubleClick">
+         v-on:click="onMouseSingleClick"
+         v-on:mousemove="onMousemove">
 
         <!--背景板-->
         <!--      <img v-bind:src="imgUrl"  alt=""/>-->
@@ -41,6 +44,7 @@
                               v-bind:meta-data="item"
                               v-bind:key="item.key"
                               v-bind:max-point="2"
+                              v-bind:closed="false"
                               v-on:complete="onComplete"
                               v-on:graphClick="onGraphClick"
                               v-on:pointClick="onPointClick"
@@ -52,27 +56,44 @@
                               v-bind:meta-data="item"
                               v-bind:key="item.key"
                               v-bind:max-point="1000"
+                              v-bind:closed="false"
                               v-on:complete="onComplete"
                               v-on:graphClick="onGraphClick"
                               v-on:pointClick="onPointClick"
                               v-on:pointDragStart="onPointDragStart"
-                              v-on:pointDragEnd="onPointDragEnd"
-            />
+                              v-on:pointDragEnd="onPointDragEnd"/>
+
+            <!--多边形图形-->
+            <label-line-strip v-for="item of polygons"
+                              v-bind:meta-data="item"
+                              v-bind:key="item.key"
+                              v-bind:max-point="1000"
+                              v-bind:closed="true"
+                              v-on:complete="onComplete"
+                              v-on:graphClick="onGraphClick"
+                              v-on:pointClick="onPointClick"
+                              v-on:pointDragStart="onPointDragStart"
+                              v-on:pointDragEnd="onPointDragEnd"/>
 
             <!--圆形图形-->
             <label-circle v-for="item of circles"
                           v-bind:meta-data="item"
-                          v-bind:key="item.key"/>
+                          v-bind:key="item.key"
+                          v-on:complete="onComplete"
+                          v-on:graphClick="onGraphClick"
+                          v-on:pointClick="onPointClick"
+                          v-on:pointDragStart="onPointDragStart"
+                          v-on:pointDragEnd="onPointDragEnd"/>
 
             <!--矩形图形-->
             <label-rectangle v-for="item of rectangles"
                              v-bind:meta-data="item"
-                             v-bind:key="item.key"/>
-
-            <!--多边形图形-->
-            <label-polygon v-for="item of polygons"
-                           v-bind:meta-data="item"
-                           v-bind:key="item.key"/>
+                             v-bind:key="item.key"
+                             v-on:complete="onComplete"
+                             v-on:graphClick="onGraphClick"
+                             v-on:pointClick="onPointClick"
+                             v-on:pointDragStart="onPointDragStart"
+                             v-on:pointDragEnd="onPointDragEnd"/>
         </svg>
     </div>
 </div>

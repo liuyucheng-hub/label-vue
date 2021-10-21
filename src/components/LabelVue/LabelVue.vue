@@ -4,7 +4,6 @@
 import LabelLineStrip from "../LabelLineStrip.vue";
 import LabelCircle from "../LabelCircle.vue";
 import LabelRectangle from "../LabelRectangle.vue";
-import LabelPolygon from "../LabelPolygon.vue";
 
 
 export default {
@@ -14,7 +13,6 @@ export default {
     LabelLineStrip,
     LabelCircle,
     LabelRectangle,
-    LabelPolygon,
   },
 
   props: {
@@ -33,6 +31,7 @@ export default {
 
   data: function () {
     return {
+      // 图形元素的key序列
       key: null,
 
       // 工具栏相关属性
@@ -374,18 +373,21 @@ export default {
     },
 
     /**
-     * 鼠标点击事件处理
+     * 鼠标单击事件处理
      */
-    onMouseClick: function (event) {
+    onMouseSingleClick: function (event) {
       if (this.isCreateModel()) {
-        this.onMouseClickForCreateModel(event);
+        this.onMouseSingleClickForCreateModel(event);
+      }
+      if (this.isEditModel()) {
+        this.onMouseSingleClickForEditModel(event);
       }
     },
 
     /**
-     * 创建模式下鼠标点击事件处理
+     * 创建模式下鼠标单击事件处理
      */
-    onMouseClickForCreateModel: function (event) {
+    onMouseSingleClickForCreateModel: function (event) {
       if (this.selectGraph === null ||
           this.selectGraph === undefined) {
         // 没有正在处理的图形对象
@@ -399,10 +401,20 @@ export default {
     },
 
     /**
-     * 鼠标双击事件处理
+     * 编辑模式下鼠标单击事件处理
      */
-    onMouseDoubleClick: function () {
-      this.completeSelectGraph();
+    onMouseSingleClickForEditModel: function (event) {
+      if (this.selectGraph !== null &&
+          this.selectGraph !== undefined &&
+          this.selectPoint !== null &&
+          this.selectPoint !== undefined &&
+          event.altKey) {
+        const index = this.selectGraph.points.indexOf(this.selectPoint);
+        if (index > -1) {
+          const newPoint = this.genPoint(event);
+          this.selectGraph.points.splice(index + 1, 0, newPoint)
+        }
+      }
     },
 
     /**
@@ -512,7 +524,7 @@ export default {
     onHotKey: function (event) {
       // Delete: 删除操作 ctrl+z: 撤销操作 alt+`: 编辑模式
       // alt+1: 创建矩形 alt+2: 创建多边形 alt+3: 创建线条
-      // alt+4: 创建连线 alt+5: 创建圆形
+      // alt+4: 创建连线 alt+5: 创建圆形 enter: 创建完成
       if (event.ctrlKey) {
         if (event.key === 'z') {
           this.onRevoke();
@@ -533,6 +545,8 @@ export default {
         }
       } else if (event.key === 'Delete') {
         this.onDelete();
+      } else if (event.key === 'Enter') {
+        this.completeSelectGraph()
       }
     },
 

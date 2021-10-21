@@ -17,6 +17,7 @@
 </template>
 
 <script>
+// 线条、连线、多边形图形
 export default {
   name: "label-line-strip",
 
@@ -25,6 +26,8 @@ export default {
     metaData: Object,
     // 图形支持的最大节点数，当>=maxPoint时完成图形创建
     maxPoint: Number,
+    // 最后节点与第一个节点闭合
+    closed: Boolean,
   },
 
   computed: {
@@ -45,14 +48,22 @@ export default {
       let res = [];
       if (this.metaData.points !== null &&
           this.metaData.points !== undefined) {
-        res.push(...this.metaData.points)
+        res.push(...this.metaData.points.slice(0, this.maxPoint))
       }
 
       // 已完成状态
       if (this.metaData.complete) {
+        // 图形需要闭合
+        if (this.closed && res.length > 1) {
+          this.copyFirstAndSwapFirstPoint(res)
+        }
         return res;
       }
       if (res.length >= this.maxPoint) {
+        // 图形需要闭合
+        if (this.closed && res.length > 1) {
+          this.copyFirstAndSwapFirstPoint(res)
+        }
         this.$emit("complete", this.metaData.key);
         return res;
       }
@@ -79,6 +90,19 @@ export default {
   },
 
   methods: {
+    /**
+     * 闭合图形时创建一个与第一个连接点相同坐标的连接
+     * 因为svg没有z-index特性，所以将起闭合作用的连接点与第一个连接点交换位置
+     * 最后渲染的节点会在图层的上面
+     */
+    copyFirstAndSwapFirstPoint: function (points) {
+      const firstPoint = points[0];
+      let copyFirstPoint = JSON.parse(JSON.stringify(firstPoint))
+      copyFirstPoint.key = -1
+      points[0] = copyFirstPoint;
+      points.push(firstPoint);
+    },
+
     /**
      * 图形选中事件处理
      */
