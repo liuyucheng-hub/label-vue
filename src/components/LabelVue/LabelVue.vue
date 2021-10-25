@@ -4,7 +4,7 @@
 import LabelLineStrip from "../LabelLineStrip.vue";
 import LabelCircle from "../LabelCircle.vue";
 import LabelRectangle from "../LabelRectangle.vue";
-
+import LabelTextBox from "../LabelTextBox";
 
 export default {
   name: "label-vue",
@@ -13,26 +13,26 @@ export default {
     LabelLineStrip,
     LabelCircle,
     LabelRectangle,
+    LabelTextBox,
   },
 
   props: {
-    // 初始的高度和宽度
-    height: {
-      type: Number,
-      default: 600,
-    },
-    width: {
-      type: Number,
-      default: 800,
-    },
     // 背景图片地址
     imgUrl: String,
   },
 
   data: function () {
     return {
+      // 组件状态相关属性
       // 图形元素的key序列
       key: null,
+      // 加载图片的高度、宽度
+      boardHeight: null,
+      boardWidth: null,
+      // 画板的缩放比例
+      boardScale: null,
+      // 画板填满编辑窗的缩放比例
+      fitWindowScale: null,
 
       // 工具栏相关属性
       // 操作模式，创建/编辑
@@ -58,6 +58,30 @@ export default {
       polygons: [],
       // 所有图形对象集合
       graphs: [],
+    }
+  },
+
+  computed: {
+    /**
+     * 计算board的style属性
+     */
+    boardStyleObject: function () {
+      return {
+        'height': this.boardHeight + 'px',
+        'width': this.boardWidth + 'px',
+        'transform': `scale(${this.boardScale}, ${this.boardScale})`,
+        '-webkit-transform': `scale(${this.boardScale}, ${this.boardScale})`,
+      }
+    },
+
+    /**
+     * svg的style属性
+     */
+    svgStyleObject: function () {
+      return {
+        'height': this.boardHeight,
+        'width': this.boardWidth,
+      }
     }
   },
 
@@ -114,9 +138,61 @@ export default {
     /**
      * 同步鼠标事件的坐标值
      */
-    syncPosition(position, event) {
+    syncPosition: function (position, event) {
       position.x = event.offsetX;
       position.y = event.offsetY;
+    },
+
+    /**
+     * 图形的连接点同步鼠标偏移量
+     */
+    syncMovementPosition: function (graph, event) {
+      const mx = event.movementX / this.boardScale;
+      const my = event.movementY / this.boardScale;
+      graph.points.forEach(p => {
+        p.x += mx;
+        p.y += my
+      })
+    },
+
+    /**
+     * 初始化board
+     */
+    initBoard: function () {
+      this.boardScale = 1;
+      this.fitWindowScale = 1;
+      this.boardHeight = 0;
+      this.boardWidth = 0;
+    },
+
+    /**
+     * board占满整个editor
+     */
+    fullBoard: function () {
+      const editorHeight = this.$refs.editor.offsetHeight;
+      const editorWidth = this.$refs.editor.offsetWidth;
+      if (!this.isGrateZero(editorHeight) ||
+          !this.isGrateZero(editorWidth) ||
+          !this.isGrateZero(this.boardHeight) ||
+          !this.isGrateZero(this.boardWidth)) {
+        return;
+      }
+
+      const heightScaleRate = editorHeight / this.boardHeight;
+      const widthScaleRate = editorWidth / this.boardWidth;
+      let scaleWidth = heightScaleRate > widthScaleRate;
+      if (scaleWidth) {
+        this.boardScale = parseInt(widthScaleRate / 0.25, 10) * 0.25
+      } else {
+        this.boardScale = parseInt(heightScaleRate / 0.25, 10) * 0.25
+      }
+      this.fitWindowScale = this.boardScale;
+    },
+
+    isGrateZero: function (value) {
+      return value !== null &&
+          value !== undefined &&
+          value > 0;
     },
 
     /**
@@ -366,9 +442,15 @@ export default {
      * 编辑模式下鼠标移动事件处理
      */
     onMouseMoveForEditModel: function (event) {
+      // 优先移动点
       if (this.dragPoint !== null &&
           this.dragPoint !== undefined) {
         this.syncPosition(this.dragPoint, event)
+        return;
+      }
+      if (this.dragGraph !== null &&
+          this.dragGraph !== undefined) {
+        this.syncMovementPosition(this.dragGraph, event);
       }
     },
 
@@ -418,6 +500,15 @@ export default {
     },
 
     /**
+     * 图片加载事件
+     */
+    onImgLoad: function () {
+      this.boardHeight = this.$refs.img.height
+      this.boardWidth = this.$refs.img.width
+      this.fullBoard()
+    },
+
+    /**
      * 图形点击事件处理
      */
     onGraphClick: function (graphKey) {
@@ -434,6 +525,34 @@ export default {
       this.clearSelectGraphAndPoint();
       matchGraph.select = true;
       this.selectGraph = matchGraph;
+    },
+
+    onGraphDragStart: function (graphKey) {
+      if (this.isCreateModel()) {
+        return;
+      }
+
+      let matchGraph = this.graphs
+          .find(item => item.key === graphKey);
+      if (matchGraph === null || matchGraph === undefined) {
+        return;
+      }
+
+      this.dragGraph = matchGraph;
+    },
+
+    onGraphDragEnd: function (graphKey) {
+      if (this.isCreateModel()) {
+        return;
+      }
+
+      let matchGraph = this.graphs
+          .find(item => item.key === graphKey);
+      if (matchGraph === null || matchGraph === undefined) {
+        return;
+      }
+
+      this.dragGraph = null;
     },
 
     /**
@@ -483,7 +602,6 @@ export default {
         return;
       }
 
-      this.dragGraph = matchGraph;
       this.dragPoint = matchPoint;
     },
 
@@ -507,7 +625,6 @@ export default {
         return;
       }
 
-      this.dragGraph = null;
       this.dragPoint = null;
     },
 
@@ -600,8 +717,6 @@ export default {
      * 编辑模式下删除操作处理
      */
     onDeleteForEditModel: function () {
-      //todo 选中节点和图形的关系
-      //todo 选中节点需要根据选中样式调整
       // 优先point
       if (this.selectPoint !== null) {
         // 图形只有一个节点时删除图形，有多个节点时删除对应节点
@@ -689,6 +804,36 @@ export default {
     },
 
     /**
+     * 放大画板
+     */
+    onZoomIn: function () {
+      this.boardScale = this.boardScale + 0.25;
+    },
+
+    /**
+     * 缩小画板
+     */
+    onZoomOut: function () {
+      if (this.boardScale - 0.25 > 0) {
+        this.boardScale = this.boardScale - 0.25;
+      }
+    },
+
+    /**
+     * 画板恢复到填充满编辑窗
+     */
+    onFitWindow: function () {
+      this.fullBoard();
+    },
+
+    /**
+     * 画板恢复到图片原始大小
+     */
+    onOriginalSize: function () {
+      this.boardScale = 1;
+    },
+
+    /**
      * 保存操作处理
      */
     onSave: function () {
@@ -700,6 +845,7 @@ export default {
   created() {
     this.resetKey();
     this.registerHotKey();
+    this.initBoard();
   },
 
   destroyed() {

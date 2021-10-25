@@ -2,7 +2,9 @@
   <g>
     <polyline v-bind:points="displayPointCoordinates"
               v-bind:class="classObject"
-              v-on:click="onGraphClick"/>
+              v-on:click="onGraphClick"
+              v-on:mousedown="onGraphMousedown"
+              v-on:mouseup="onGraphMouseUp"/>
 
     <circle r="4"
             v-for="item of displayPoints"
@@ -19,7 +21,7 @@
 <script>
 // 线条、连线、多边形图形
 export default {
-  name: "label-line-strip",
+  name: "LabelLineStrip",
 
   props: {
     // 图形的元数据
@@ -108,6 +110,20 @@ export default {
      */
     onGraphClick: function () {
       this.$emit("graphClick", this.metaData.key)
+    },
+
+    /**
+     * 按下鼠标左键事件处理
+     */
+    onGraphMousedown: function () {
+      this.$emit("graphDragStart", this.metaData.key)
+    },
+
+    /**
+     * 松开鼠标左键事件处理
+     */
+    onGraphMouseUp: function () {
+      this.$emit("graphDragEnd", this.metaData.key)
     },
 
     /**

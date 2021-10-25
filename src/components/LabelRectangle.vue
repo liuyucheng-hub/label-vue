@@ -5,7 +5,9 @@
           v-bind:width="width+'px'"
           v-bind:height="height+'px'"
           v-bind:class="classObject"
-          v-on:click="onGraphClick"/>
+          v-on:click="onGraphClick"
+          v-on:mousedown="onGraphMousedown"
+          v-on:mouseup="onGraphMouseUp"/>
 
     <circle r="4"
             v-for="item of displayPoints"
@@ -22,7 +24,7 @@
 <script>
 // 矩形图形
 export default {
-  name: "label-rectangle",
+  name: "LabelRectangle",
 
   props: {
     // 图形的元数据
@@ -124,6 +126,20 @@ export default {
     },
 
     /**
+     * 按下鼠标左键事件处理
+     */
+    onGraphMousedown: function () {
+      this.$emit("graphDragStart", this.metaData.key)
+    },
+
+    /**
+     * 松开鼠标左键事件处理
+     */
+    onGraphMouseUp: function () {
+      this.$emit("graphDragEnd", this.metaData.key)
+    },
+
+    /**
      * 连接点选中事件处理
      */
     onPointClick: function (pointKey) {
@@ -133,14 +149,14 @@ export default {
     /**
      * 按下鼠标左键事件处理
      */
-    onPointMousedown: function (event, pointKey) {
+    onPointMousedown: function (pointKey) {
       this.$emit("pointDragStart", this.metaData.key, pointKey)
     },
 
     /**
      * 松开鼠标左键事件处理
      */
-    onPointMouseUp: function (event, pointKey) {
+    onPointMouseUp: function (pointKey) {
       this.$emit("pointDragEnd", this.metaData.key, pointKey)
     },
   },

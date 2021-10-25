@@ -1,99 +1,119 @@
-<div id="label-vue"
-     v-bind:style="{width: width + 'px', height: height + 'px', textAlign: 'left'}">
+<div id="label-vue">
 
     <!--工具栏-->
     <div id="label-vue-tool-bar">
-        <button v-on:click.stop="onCreateRectangle">创建矩形</button>
-        <button v-on:click.stop="onCreatePolygon">创建多边形</button>
-        <button v-on:click.stop="onCreateLine">创建线条</button>
-        <button v-on:click.stop="onCreateLineStrip">创建连线</button>
-        <button v-on:click.stop="onCreateCircle">创建圆形</button>
-        <button v-on:click.stop="onEdit">编辑图形</button>
-        <button v-on:click.stop="onRevoke">撤销</button>
-        <button v-on:click.stop="onDelete">删除</button>
+        <button v-on:click.stop="onCreateRectangle" title="alt+1">创建矩形</button>
+        <button v-on:click.stop="onCreatePolygon" title="alt+2">创建多边形</button>
+        <button v-on:click.stop="onCreateLine" title="alt+3">创建线条</button>
+        <button v-on:click.stop="onCreateLineStrip" title="alt+4">创建连线</button>
+        <button v-on:click.stop="onCreateCircle" title="alt+5">创建圆形</button>
+        <button v-on:click.stop="onEdit" title="alt+`">编辑图形</button>
+        <button v-on:click.stop="onRevoke" title="ctrl+z">撤销</button>
+        <button v-on:click.stop="onDelete" title="delete">删除</button>
+        <button v-on:click.stop="onZoomIn" title="">放大</button>
+        <button v-on:click.stop="onZoomOut" title="">缩小</button>
+        <button v-on:click.stop="onFitWindow" title="">默认大小</button>
+        <button v-on:click.stop="onOriginalSize" title="">原始大小</button>
         <button v-on:click.stop="onSave">保存</button>
         <button title="
-创建矩形:alt+1
-创建多边形: alt+2
-创建线条: alt+3
-创建连线: alt+4
-创建圆形: alt+5
 完成创建: enter
-编辑图形: alt+`
-撤销: ctrl+z
-删除: delete
 拖动连接点：按下鼠标左键，移动鼠标
 增加连接点：选中连接点，然后在适当位置alt+鼠标左键点击
 ">帮助
         </button>
     </div>
 
+    <!-- 图形列表  -->
+    <div id="label-vue-list">
+
+    </div>
+
     <!--编辑窗-->
     <div id="label-vue-editor"
-         v-on:click="onMouseSingleClick"
-         v-on:mousemove="onMousemove">
-
-        <!--背景板-->
-        <!--      <img v-bind:src="imgUrl"  alt=""/>-->
+         ref="editor">
+        <!-- 文本框 -->
+        <label-text-box/>
 
         <!--画板-->
-        <svg v-bind:height="height"
-             v-bind:width="width">
-            <!--线条图形-->
-            <label-line-strip v-for="item of lines"
+        <div id="label-vue-board"
+             v-bind:style="boardStyleObject">
+
+            <!--背景板-->
+            <img id="label-vue-board-background"
+                 ref="img"
+                 v-bind:src="imgUrl"
+                 v-on:load="onImgLoad"/>
+
+            <svg id="label-vue-board-front"
+                 v-bind:style="svgStyleObject"
+                 v-on:click.stop="onMouseSingleClick"
+                 v-on:mousemove.stop="onMousemove">
+                <!--线条图形-->
+                <label-line-strip v-for="item of lines"
+                                  v-bind:meta-data="item"
+                                  v-bind:key="item.key"
+                                  v-bind:max-point="2"
+                                  v-bind:closed="false"
+                                  v-on:complete="onComplete"
+                                  v-on:graphClick="onGraphClick"
+                                  v-on:graphDragStart="onGraphDragStart"
+                                  v-on:graphDragEnd="onGraphDragEnd"
+                                  v-on:pointClick="onPointClick"
+                                  v-on:pointDragStart="onPointDragStart"
+                                  v-on:pointDragEnd="onPointDragEnd"/>
+
+                <!--连线图形-->
+                <label-line-strip v-for="item of lineStrips"
+                                  v-bind:meta-data="item"
+                                  v-bind:key="item.key"
+                                  v-bind:max-point="1000"
+                                  v-bind:closed="false"
+                                  v-on:complete="onComplete"
+                                  v-on:graphClick="onGraphClick"
+                                  v-on:graphDragStart="onGraphDragStart"
+                                  v-on:graphDragEnd="onGraphDragEnd"
+                                  v-on:pointClick="onPointClick"
+                                  v-on:pointDragStart="onPointDragStart"
+                                  v-on:pointDragEnd="onPointDragEnd"/>
+
+                <!--多边形图形-->
+                <label-line-strip v-for="item of polygons"
+                                  v-bind:meta-data="item"
+                                  v-bind:key="item.key"
+                                  v-bind:max-point="1000"
+                                  v-bind:closed="true"
+                                  v-on:complete="onComplete"
+                                  v-on:graphClick="onGraphClick"
+                                  v-on:graphDragStart="onGraphDragStart"
+                                  v-on:graphDragEnd="onGraphDragEnd"
+                                  v-on:pointClick="onPointClick"
+                                  v-on:pointDragStart="onPointDragStart"
+                                  v-on:pointDragEnd="onPointDragEnd"/>
+
+                <!--圆形图形-->
+                <label-circle v-for="item of circles"
                               v-bind:meta-data="item"
                               v-bind:key="item.key"
-                              v-bind:max-point="2"
-                              v-bind:closed="false"
                               v-on:complete="onComplete"
                               v-on:graphClick="onGraphClick"
+                              v-on:graphDragStart="onGraphDragStart"
+                              v-on:graphDragEnd="onGraphDragEnd"
                               v-on:pointClick="onPointClick"
                               v-on:pointDragStart="onPointDragStart"
                               v-on:pointDragEnd="onPointDragEnd"/>
 
-            <!--连线图形-->
-            <label-line-strip v-for="item of lineStrips"
-                              v-bind:meta-data="item"
-                              v-bind:key="item.key"
-                              v-bind:max-point="1000"
-                              v-bind:closed="false"
-                              v-on:complete="onComplete"
-                              v-on:graphClick="onGraphClick"
-                              v-on:pointClick="onPointClick"
-                              v-on:pointDragStart="onPointDragStart"
-                              v-on:pointDragEnd="onPointDragEnd"/>
-
-            <!--多边形图形-->
-            <label-line-strip v-for="item of polygons"
-                              v-bind:meta-data="item"
-                              v-bind:key="item.key"
-                              v-bind:max-point="1000"
-                              v-bind:closed="true"
-                              v-on:complete="onComplete"
-                              v-on:graphClick="onGraphClick"
-                              v-on:pointClick="onPointClick"
-                              v-on:pointDragStart="onPointDragStart"
-                              v-on:pointDragEnd="onPointDragEnd"/>
-
-            <!--圆形图形-->
-            <label-circle v-for="item of circles"
-                          v-bind:meta-data="item"
-                          v-bind:key="item.key"
-                          v-on:complete="onComplete"
-                          v-on:graphClick="onGraphClick"
-                          v-on:pointClick="onPointClick"
-                          v-on:pointDragStart="onPointDragStart"
-                          v-on:pointDragEnd="onPointDragEnd"/>
-
-            <!--矩形图形-->
-            <label-rectangle v-for="item of rectangles"
-                             v-bind:meta-data="item"
-                             v-bind:key="item.key"
-                             v-on:complete="onComplete"
-                             v-on:graphClick="onGraphClick"
-                             v-on:pointClick="onPointClick"
-                             v-on:pointDragStart="onPointDragStart"
-                             v-on:pointDragEnd="onPointDragEnd"/>
-        </svg>
+                <!--矩形图形-->
+                <label-rectangle v-for="item of rectangles"
+                                 v-bind:meta-data="item"
+                                 v-bind:key="item.key"
+                                 v-on:complete="onComplete"
+                                 v-on:graphClick="onGraphClick"
+                                 v-on:graphDragStart="onGraphDragStart"
+                                 v-on:graphDragEnd="onGraphDragEnd"
+                                 v-on:pointClick="onPointClick"
+                                 v-on:pointDragStart="onPointDragStart"
+                                 v-on:pointDragEnd="onPointDragEnd"/>
+            </svg>
+        </div>
     </div>
 </div>

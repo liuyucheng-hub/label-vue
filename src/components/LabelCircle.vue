@@ -4,7 +4,9 @@
             v-bind:cy="cy"
             v-bind:r="r"
             v-bind:class="classObject"
-            v-on:click="onGraphClick"/>
+            v-on:click="onGraphClick"
+            v-on:mousedown="onGraphMousedown"
+            v-on:mouseup="onGraphMouseUp"/>
 
     <circle r="4"
             v-for="item of displayPoints"
@@ -21,7 +23,7 @@
 <script>
 // 圆形图形
 export default {
-  name: "label-circle",
+  name: "LabelCircle",
 
   props: {
     metaData: Object,
@@ -100,6 +102,20 @@ export default {
      */
     onGraphClick: function () {
       this.$emit("graphClick", this.metaData.key)
+    },
+
+    /**
+     * 按下鼠标左键事件处理
+     */
+    onGraphMousedown: function () {
+      this.$emit("graphDragStart", this.metaData.key)
+    },
+
+    /**
+     * 松开鼠标左键事件处理
+     */
+    onGraphMouseUp: function () {
+      this.$emit("graphDragEnd", this.metaData.key)
     },
 
     /**
