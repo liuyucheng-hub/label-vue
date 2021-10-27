@@ -1,5 +1,5 @@
 <template>
-  <div id="label-vue-text-box" style="display: none"/>
+  <div id="label-vue-text-box"/>
 </template>
 
 <script>
@@ -8,6 +8,4 @@ export default {
 }
 </script>
 
-<style scoped>
-
-</style>
+<style scoped></style>

@@ -1,36 +1,28 @@
 <div id="label-vue">
 
     <!--工具栏-->
-    <div id="label-vue-tool-bar">
-        <button v-on:click.stop="onCreateRectangle" title="alt+1">创建矩形</button>
-        <button v-on:click.stop="onCreatePolygon" title="alt+2">创建多边形</button>
-        <button v-on:click.stop="onCreateLine" title="alt+3">创建线条</button>
-        <button v-on:click.stop="onCreateLineStrip" title="alt+4">创建连线</button>
-        <button v-on:click.stop="onCreateCircle" title="alt+5">创建圆形</button>
-        <button v-on:click.stop="onEdit" title="alt+`">编辑图形</button>
-        <button v-on:click.stop="onRevoke" title="ctrl+z">撤销</button>
-        <button v-on:click.stop="onDelete" title="delete">删除</button>
-        <button v-on:click.stop="onZoomIn" title="">放大</button>
-        <button v-on:click.stop="onZoomOut" title="">缩小</button>
-        <button v-on:click.stop="onFitWindow" title="">默认大小</button>
-        <button v-on:click.stop="onOriginalSize" title="">原始大小</button>
-        <button v-on:click.stop="onSave">保存</button>
-        <button title="
-完成创建: enter
-拖动连接点：按下鼠标左键，移动鼠标
-增加连接点：选中连接点，然后在适当位置alt+鼠标左键点击
-">帮助
-        </button>
-    </div>
+    <label-tool-bar v-on:createRectangle="onCreateRectangle"
+                    v-on:createPolygon="onCreatePolygon"
+                    v-on:createLine="onCreateLine"
+                    v-on:createLineStrip="onCreateLineStrip"
+                    v-on:createCircle="onCreateCircle"
+                    v-on:edit="onEdit"
+                    v-on:revoke="onRevoke"
+                    v-on:delete="onDelete"
+                    v-on:zoomIn="onZoomIn"
+                    v-on:zoomOut="onZoomOut"
+                    v-on:fitWindow="onFitWindow"
+                    v-on:originalSize="onOriginalSize"
+                    v-on:save="onSave"
+    />
 
     <!-- 图形列表  -->
-    <div id="label-vue-list">
-
-    </div>
+    <label-list/>
 
     <!--编辑窗-->
     <div id="label-vue-editor"
-         ref="editor">
+         ref="editor"
+         v-bind:style="editorStyleObject">
         <!-- 文本框 -->
         <label-text-box/>
 

@@ -5,31 +5,17 @@
     position: relative;
 }
 
-#label-vue-tool-bar {
-    float: left;
-    width: 40px;
-    height: calc(100% - 0px);
-}
-
-#label-vue-list {
-    float: right;
-    width: 40px;
-    height: calc(100% - 0px);
-}
-
 #label-vue-editor {
     height: calc(100% - 20px);
     margin: 0 50px;
     border: black 1px solid;
-    display: flex;
-    justify-content: center;
-    align-items: center;
     overflow: auto;
 }
 
 #label-vue-board {
     position: relative;
     overflow: hidden;
+    transform-origin: 0 0;
 }
 
 #label-vue-board-front {
@@ -38,23 +24,6 @@
     position: absolute;
     top: 0;
     left: 0;
-}
-
-
-polyline {
-    stroke: green;
-    fill: transparent;
-    stroke-width: 2;
-}
-
-polyline.label-vue-not-complete {
-    stroke: greenyellow;
-}
-
-polyline.label-vue-select, polyline:hover {
-    stroke: red;
-    fill: red;
-    fill-opacity: 0.3
 }
 
 circle {
@@ -85,6 +54,22 @@ rect.label-vue-not-complete {
 }
 
 rect.label-vue-select, rect:hover {
+    stroke: red;
+    fill: red;
+    fill-opacity: 0.3
+}
+
+polyline {
+    stroke: green;
+    fill: transparent;
+    stroke-width: 2;
+}
+
+polyline.label-vue-not-complete {
+    stroke: greenyellow;
+}
+
+polyline.label-vue-select, polyline:hover {
     stroke: red;
     fill: red;
     fill-opacity: 0.3

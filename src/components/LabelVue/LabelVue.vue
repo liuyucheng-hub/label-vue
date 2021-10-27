@@ -5,6 +5,8 @@ import LabelLineStrip from "../LabelLineStrip.vue";
 import LabelCircle from "../LabelCircle.vue";
 import LabelRectangle from "../LabelRectangle.vue";
 import LabelTextBox from "../LabelTextBox";
+import LabelToolBar from "../LabelToolBar/LabelToolBar";
+import LabelList from "../LabelList/LabelList";
 
 export default {
   name: "label-vue",
@@ -14,6 +16,8 @@ export default {
     LabelCircle,
     LabelRectangle,
     LabelTextBox,
+    LabelToolBar,
+    LabelList
   },
 
   props: {
@@ -26,6 +30,9 @@ export default {
       // 组件状态相关属性
       // 图形元素的key序列
       key: null,
+      // 编辑框的scroll值
+      editorScrollTopRate: null,
+      editorScrollLeftRate: null,
       // 加载图片的高度、宽度
       boardHeight: null,
       boardWidth: null,
@@ -33,14 +40,14 @@ export default {
       boardScale: null,
       // 画板填满编辑窗的缩放比例
       fitWindowScale: null,
+      // 画板的margin值
+      boarderMarginTop: null,
+      boarderMarginLeft: null,
 
-      // 工具栏相关属性
       // 操作模式，创建/编辑
       model: null,
       // 选择的创建模式
       selectCreateGraph: '',
-
-      // 编辑窗相关属性
       // 当前操作图形对象
       selectGraph: null,
       // 当前操作图形连接点对象
@@ -63,12 +70,24 @@ export default {
 
   computed: {
     /**
+     * 计算编辑框的style属性
+     */
+    editorStyleObject: function () {
+      let boarderLessEditor = this.boarderMarginLeft > 0 && this.boarderMarginTop > 0;
+      return {
+        'overflow': boarderLessEditor ? 'hidden' : 'auto',
+      }
+    },
+
+    /**
      * 计算board的style属性
      */
     boardStyleObject: function () {
       return {
         'height': this.boardHeight + 'px',
         'width': this.boardWidth + 'px',
+        'margin-top': this.boarderMarginTop + 'px',
+        'margin-left': this.boarderMarginLeft + 'px',
         'transform': `scale(${this.boardScale}, ${this.boardScale})`,
         '-webkit-transform': `scale(${this.boardScale}, ${this.boardScale})`,
       }
@@ -86,6 +105,20 @@ export default {
   },
 
   methods: {
+    /**
+     * 初始化board
+     */
+    initBoard: function () {
+      this.boardScale = 1;
+      this.fitWindowScale = 1;
+      this.boardHeight = 0;
+      this.boardWidth = 0;
+      this.boarderMarginTop = 0;
+      this.boarderMarginLeft = 0;
+      this.editorScrollTopRate = 0;
+      this.editorScrollLeftRate = 0;
+    },
+
     /**
      * 当前是创建模式
      */
@@ -136,6 +169,129 @@ export default {
     },
 
     /**
+     * 设置画板的缩放比例
+     */
+    setBoardScale: function (scale) {
+      this.completeEditorScrollRate();
+      this.boardScale = scale;
+      this.completeBoarderMargin();
+      // 等待先渲染
+      setTimeout(() => {
+        this.completeEditorScrollValue();
+      }, 0);
+    },
+
+    /**
+     * 计算画板margin的值
+     */
+    completeBoarderMargin: function () {
+      this.completeBoarderMarginTop();
+      this.completeBoarderMarginLeft();
+    },
+
+    /**
+     * 计算画板margin-top的值
+     */
+    completeBoarderMarginTop: function () {
+      let editorHeight = 0;
+      if (this.$refs.editor !== null && this.$refs.editor !== undefined) {
+        editorHeight = this.$refs.editor.offsetHeight;
+      }
+
+      if (this.isGrateZero(editorHeight) &&
+          this.isGrateZero(this.boardHeight)) {
+        let diff = editorHeight - this.boardHeight * this.boardScale;
+        this.boarderMarginTop = diff > 0 ? diff / 2 : 0
+      } else {
+        this.boarderMarginTop = 0
+      }
+    },
+    /**
+     * 计算画板margin-left的值
+     */
+    completeBoarderMarginLeft: function () {
+      let editorWidth = 0;
+      if (this.$refs.editor !== null && this.$refs.editor !== undefined) {
+        editorWidth = this.$refs.editor.offsetWidth
+      }
+      if (this.isGrateZero(editorWidth) &&
+          this.isGrateZero(this.boardWidth)) {
+        let diff = editorWidth - this.boardWidth * this.boardScale;
+        this.boarderMarginLeft = diff > 0 ? diff / 2 : 0
+      } else {
+        this.boarderMarginLeft = 0;
+      }
+    },
+
+    /**
+     * 计算editor的滑动比例
+     */
+    completeEditorScrollRate: function () {
+      if (this.isEditorScrollTop()) {
+        // 纵向滑动量,等价scrollTop / scrollHeight - clientHeight
+        const scrollHeightValue = this.boardHeight * this.boardScale - this.$refs.editor.clientHeight;
+        this.editorScrollTopRate = this.$refs.editor.scrollTop / scrollHeightValue
+      } else {
+        this.editorScrollTopRate = 0;
+      }
+      if (this.isEditorScrollLeft()) {
+        // 横向滑动量,等价scrollLeft / scrollWidth - clientWidth
+        const scrollWidthValue = this.boardWidth * this.boardScale - this.$refs.editor.clientWidth;
+        this.editorScrollLeftRate = this.$refs.editor.scrollLeft / scrollWidthValue
+        console.log("width:" + this.$refs.editor.clientWidth + ",total:" + this.boardWidth * this.boardScale + ",rate:" + this.editorScrollLeftRate);
+      } else {
+        this.editorScrollLeftRate = 0;
+      }
+    },
+
+    /**
+     * 根据滑动比例计算滑动量
+     */
+    completeEditorScrollValue: function () {
+      if (!this.isEditorScrollTop() &&
+          !this.isEditorScrollLeft()) {
+        return
+      }
+
+      let ele = document.getElementById('label-vue-editor');
+      if (this.isEditorScrollTop()) {
+        // 从不滑动放大到需要滑动，取中间50%
+        if (this.editorScrollTopRate === 0) {
+          this.editorScrollTopRate = 0.5
+        }
+        const scrollHeightValue = this.boardHeight * this.boardScale - ele.clientHeight;
+        let val = this.editorScrollTopRate * scrollHeightValue;
+        console.log(val);
+        ele.scrollTop = this.editorScrollTopRate * scrollHeightValue;
+      }
+      if (this.isEditorScrollLeft()) {
+        if (this.editorScrollLeftRate === 0) {
+          this.editorScrollLeftRate = 0.5
+        }
+        const scrollWidthValue = this.boardWidth * this.boardScale - ele.clientWidth;
+        let val = this.editorScrollLeftRate * scrollWidthValue;
+        console.log(val);
+        ele.scrollLeft = this.editorScrollLeftRate * scrollWidthValue;
+        console.log("width:" + ele.clientWidth + ",total:" + this.boardWidth * this.boardScale);
+        console.log("scrollLeft:" + ele.scrollLeft + ",rate:" + this.editorScrollLeftRate);
+      }
+    },
+
+    /**
+     * editor纵向有发生滑动
+     */
+    isEditorScrollTop: function () {
+      return this.boardHeight * this.boardScale >= this.$refs.editor.clientHeight
+    },
+
+    /**
+     * editor横向有发生滑动
+     */
+    isEditorScrollLeft: function () {
+      return this.boardWidth * this.boardScale >= this.$refs.editor.clientWidth
+    },
+
+    /**
      * 同步鼠标事件的坐标值
      */
     syncPosition: function (position, event) {
@@ -156,19 +312,16 @@ export default {
     },
 
     /**
-     * 初始化board
+     * 计算画板属性
      */
-    initBoard: function () {
-      this.boardScale = 1;
-      this.fitWindowScale = 1;
-      this.boardHeight = 0;
-      this.boardWidth = 0;
+    fullBoard: function () {
+      this.completeBoardScale();
     },
 
     /**
      * board占满整个editor
      */
-    fullBoard: function () {
+    completeBoardScale: function () {
       const editorHeight = this.$refs.editor.offsetHeight;
       const editorWidth = this.$refs.editor.offsetWidth;
       if (!this.isGrateZero(editorHeight) ||
@@ -180,12 +333,13 @@ export default {
 
       const heightScaleRate = editorHeight / this.boardHeight;
       const widthScaleRate = editorWidth / this.boardWidth;
-      let scaleWidth = heightScaleRate > widthScaleRate;
-      if (scaleWidth) {
-        this.boardScale = parseInt(widthScaleRate / 0.25, 10) * 0.25
+      let scale;
+      if (heightScaleRate > widthScaleRate) {
+        scale = parseInt(widthScaleRate / 0.25, 10) * 0.25;
       } else {
-        this.boardScale = parseInt(heightScaleRate / 0.25, 10) * 0.25
+        scale = parseInt(heightScaleRate / 0.25, 10) * 0.25
       }
+      this.setBoardScale(scale);
       this.fitWindowScale = this.boardScale;
     },
 
@@ -807,7 +961,7 @@ export default {
      * 放大画板
      */
     onZoomIn: function () {
-      this.boardScale = this.boardScale + 0.25;
+      this.setBoardScale(this.boardScale + 0.25)
     },
 
     /**
@@ -815,7 +969,7 @@ export default {
      */
     onZoomOut: function () {
       if (this.boardScale - 0.25 > 0) {
-        this.boardScale = this.boardScale - 0.25;
+        this.setBoardScale(this.boardScale - 0.25)
       }
     },
 
@@ -830,7 +984,7 @@ export default {
      * 画板恢复到图片原始大小
      */
     onOriginalSize: function () {
-      this.boardScale = 1;
+      this.setBoardScale(1)
     },
 
     /**
