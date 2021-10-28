@@ -1,4 +1,10 @@
 <div id="label-vue-tool-bar">
+    <!--    <div class="btn" v-on:click.stop="onCreateRectangle">-->
+    <!--        <img src="./rectangle.svg"/>-->
+    <!--    </div>-->
+    <!--    <div class="btn" v-on:click.stop="onCreatePolygon">-->
+    <!--        <img src="">-->
+    <!--    </div>-->
     <button v-on:click.stop="onCreateRectangle" title="alt+1">创建矩形</button>
     <button v-on:click.stop="onCreatePolygon" title="alt+2">创建多边形</button>
     <button v-on:click.stop="onCreateLine" title="alt+3">创建线条</button>
@@ -14,8 +20,10 @@
     <button v-on:click.stop="onSave">保存</button>
     <button title="
 完成创建: enter
-拖动连接点：按下鼠标左键，移动鼠标
+拖动连接点：在连接点位置按下鼠标左键，移动鼠标
+拖动图形：在图形位置按下鼠标左键，移动鼠标
 增加连接点：选中连接点，然后在适当位置alt+鼠标左键点击
+显示内容弹窗：alt+鼠标左键点击
 ">帮助
     </button>
 </div>

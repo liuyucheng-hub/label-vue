@@ -17,15 +17,18 @@
     />
 
     <!-- 图形列表  -->
-    <label-list/>
+    <label-list v-bind:graphs="graphs"/>
 
+    <!-- 文本框 -->
+    <label-text-box v-bind:graph="textBoxGraph"
+                    v-bind:position-x="textBoxPositionX"
+                    v-bind:position-y="textBoxPositionY"
+                    v-bind:show="textBoxShow"
+                    v-on:ok="onTextBoxOK"/>
     <!--编辑窗-->
     <div id="label-vue-editor"
          ref="editor"
          v-bind:style="editorStyleObject">
-        <!-- 文本框 -->
-        <label-text-box/>
-
         <!--画板-->
         <div id="label-vue-board"
              v-bind:style="boardStyleObject">
@@ -38,16 +41,17 @@
 
             <svg id="label-vue-board-front"
                  v-bind:style="svgStyleObject"
-                 v-on:click.stop="onMouseSingleClick"
+                 v-on:click.stop="onMouseClick"
                  v-on:mousemove.stop="onMousemove">
                 <!--线条图形-->
                 <label-line-strip v-for="item of lines"
                                   v-bind:meta-data="item"
                                   v-bind:key="item.key"
-                                  v-bind:max-point="2"
-                                  v-bind:closed="false"
+                                  v-bind:line="true"
+                                  v-bind:editModel="isEditModel"
                                   v-on:complete="onComplete"
                                   v-on:graphClick="onGraphClick"
+                                  v-on:graphAltClick="onGraphAltClick"
                                   v-on:graphDragStart="onGraphDragStart"
                                   v-on:graphDragEnd="onGraphDragEnd"
                                   v-on:pointClick="onPointClick"
@@ -58,10 +62,11 @@
                 <label-line-strip v-for="item of lineStrips"
                                   v-bind:meta-data="item"
                                   v-bind:key="item.key"
-                                  v-bind:max-point="1000"
-                                  v-bind:closed="false"
+                                  v-bind:line-strip="true"
+                                  v-bind:editModel="isEditModel"
                                   v-on:complete="onComplete"
                                   v-on:graphClick="onGraphClick"
+                                  v-on:graphAltClick="onGraphAltClick"
                                   v-on:graphDragStart="onGraphDragStart"
                                   v-on:graphDragEnd="onGraphDragEnd"
                                   v-on:pointClick="onPointClick"
@@ -72,10 +77,11 @@
                 <label-line-strip v-for="item of polygons"
                                   v-bind:meta-data="item"
                                   v-bind:key="item.key"
-                                  v-bind:max-point="1000"
-                                  v-bind:closed="true"
+                                  v-bind:polygon="true"
+                                  v-bind:editModel="isEditModel"
                                   v-on:complete="onComplete"
                                   v-on:graphClick="onGraphClick"
+                                  v-on:graphAltClick="onGraphAltClick"
                                   v-on:graphDragStart="onGraphDragStart"
                                   v-on:graphDragEnd="onGraphDragEnd"
                                   v-on:pointClick="onPointClick"
@@ -86,8 +92,10 @@
                 <label-circle v-for="item of circles"
                               v-bind:meta-data="item"
                               v-bind:key="item.key"
+                              v-bind:editModel="isEditModel"
                               v-on:complete="onComplete"
                               v-on:graphClick="onGraphClick"
+                              v-on:graphAltClick="onGraphAltClick"
                               v-on:graphDragStart="onGraphDragStart"
                               v-on:graphDragEnd="onGraphDragEnd"
                               v-on:pointClick="onPointClick"
@@ -98,8 +106,10 @@
                 <label-rectangle v-for="item of rectangles"
                                  v-bind:meta-data="item"
                                  v-bind:key="item.key"
+                                 v-bind:editModel="isEditModel"
                                  v-on:complete="onComplete"
                                  v-on:graphClick="onGraphClick"
+                                 v-on:graphAltClick="onGraphAltClick"
                                  v-on:graphDragStart="onGraphDragStart"
                                  v-on:graphDragEnd="onGraphDragEnd"
                                  v-on:pointClick="onPointClick"

@@ -1,19 +1,21 @@
 <template>
-  <g>
-    <circle v-bind:cx="cx"
+  <g class="label-vue-graph"
+     v-bind:class="classObject">
+    <circle class="label-vue-line label-vue-circle"
+            v-bind:cx="cx"
             v-bind:cy="cy"
             v-bind:r="r"
-            v-bind:class="classObject"
             v-on:click="onGraphClick"
             v-on:mousedown="onGraphMousedown"
             v-on:mouseup="onGraphMouseUp"/>
 
-    <circle r="4"
+    <circle r="2"
+            class="label-vue-point"
             v-for="item of displayPoints"
             v-bind:cx="item.x"
             v-bind:cy="item.y"
             v-bind:key="item.key"
-            v-bind:class="classObject"
+            v-bind:class="{'label-vue-select': item.select}"
             v-on:click="onPointClick(item.key)"
             v-on:mousedown="onPointMousedown(item.key)"
             v-on:mouseup="onPointMouseUp(item.key)"/>
@@ -27,6 +29,7 @@ export default {
 
   props: {
     metaData: Object,
+    editModel: Boolean,
   },
 
   computed: {
@@ -35,7 +38,7 @@ export default {
      */
     classObject: function () {
       return {
-        'label-vue-not-complete': !this.metaData.complete,
+        'label-vue-edit-model': this.editModel,
         'label-vue-select': this.metaData.select
       }
     },
@@ -100,8 +103,13 @@ export default {
     /**
      * 图形选中事件处理
      */
-    onGraphClick: function () {
-      this.$emit("graphClick", this.metaData.key)
+    onGraphClick: function (event) {
+      if (event.altKey) {
+        console.log(event)
+        this.$emit("graphAltClick", this.metaData.key)
+      } else {
+        this.$emit("graphClick", this.metaData.key)
+      }
     },
 
     /**

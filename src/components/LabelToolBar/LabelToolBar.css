@@ -1,5 +1,18 @@
 #label-vue-tool-bar {
     float: left;
-    width: 40px;
     height: calc(100% - 0px);
+    width: 56px;
+    padding: 8px;
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: flex;
+    -webkit-flex-direction: column;
+    flex-direction: column;
+    -webkit-align-items: flex-start;
+    align-items: flex-start;
+}
+
+#label-vue-tool-bar .btn img {
+    height: 36px;
+    width: 40px;
 }

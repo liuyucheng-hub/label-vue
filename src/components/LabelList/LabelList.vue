@@ -7,6 +7,11 @@
 <script>
 export default {
   name: "LabelList",
+
+  props: {
+    graphs: Array,
+  },
+
 }
 </script>
 

@@ -1,3 +1,4 @@
+/*布局*/
 #label-vue {
     height: calc(100vh - 40px);
     margin: 20px;
@@ -14,7 +15,7 @@
 
 #label-vue-board {
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     transform-origin: 0 0;
 }
 
@@ -26,51 +27,67 @@
     left: 0;
 }
 
-circle {
+/*图形样式*/
+.label-vue-graph.label-vue-edit-model:hover {
+    cursor: pointer;
+}
+
+.label-vue-line {
+    stroke-width: 1;
+    stroke: green;
+}
+
+.label-vue-polygon .label-vue-line {
+    stroke: red;
+}
+
+.label-vue-graph.label-vue-edit-model:hover .label-vue-line,
+.label-vue-graph.label-vue-select .label-vue-line {
+    stroke: white;
+}
+
+.label-vue-point {
     stroke: green;
     fill: green;
-    stroke-width: 2;
+    stroke-width: 1;
 }
 
-circle.label-vue-not-complete {
-    stroke: greenyellow;
-    fill: greenyellow;
-}
-
-circle.label-vue-select, circle:hover {
+.label-vue-polygon .label-vue-point {
     stroke: red;
     fill: red;
-    fill-opacity: 0.3
 }
 
-rect {
-    stroke: green;
+.label-vue-graph.label-vue-edit-model:hover .label-vue-point,
+.label-vue-graph.label-vue-select .label-vue-point {
+    stroke: white;
+}
+
+.label-vue-graph.label-vue-edit-model:hover .label-vue-point:hover,
+.label-vue-graph.label-vue-select .label-vue-point.label-vue-select {
+    stroke-width: 4
+}
+
+.label-vue-circle,
+.label-vue-line,
+.label-vue-lineStrip,
+.label-vue-rectangle,
+.label-vue-polygon {
     fill: transparent;
-    stroke-width: 2;
+    fill-opacity: 0.6;
 }
 
-rect.label-vue-not-complete {
-    stroke: greenyellow;
+.label-vue-graph.label-vue-edit-model:hover .label-vue-circle,
+.label-vue-graph.label-vue-select .label-vue-circle,
+.label-vue-graph.label-vue-edit-model:hover .label-vue-line,
+.label-vue-graph.label-vue-select .label-vue-line,
+.label-vue-graph.label-vue-edit-model:hover .label-vue-lineStrip,
+.label-vue-graph.label-vue-select .label-vue-lineStrip,
+.label-vue-graph.label-vue-edit-model:hover .label-vue-rectangle,
+.label-vue-graph.label-vue-select .label-vue-rectangle {
+    fill: green;
 }
 
-rect.label-vue-select, rect:hover {
-    stroke: red;
+.label-vue-graph.label-vue-edit-model:hover .label-vue-polygon,
+.label-vue-graph.label-vue-select .label-vue-polygon {
     fill: red;
-    fill-opacity: 0.3
-}
-
-polyline {
-    stroke: green;
-    fill: transparent;
-    stroke-width: 2;
-}
-
-polyline.label-vue-not-complete {
-    stroke: greenyellow;
-}
-
-polyline.label-vue-select, polyline:hover {
-    stroke: red;
-    fill: red;
-    fill-opacity: 0.3
 }

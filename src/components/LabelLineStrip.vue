@@ -1,17 +1,20 @@
 <template>
-  <g>
-    <polyline v-bind:points="displayPointCoordinates"
-              v-bind:class="classObject"
+  <g class="label-vue-graph"
+     v-bind:class="graphClassObject">
+    <polyline class="label-vue-line"
+              v-bind:points="displayPointCoordinates"
+              v-bind:class="polylineClassObject"
               v-on:click="onGraphClick"
               v-on:mousedown="onGraphMousedown"
               v-on:mouseup="onGraphMouseUp"/>
 
-    <circle r="4"
+    <circle r="2"
+            class="label-vue-point"
             v-for="item of displayPoints"
             v-bind:cx="item.x"
             v-bind:cy="item.y"
             v-bind:key="item.key"
-            v-bind:class="classObject"
+            v-bind:class="{'label-vue-select': item.select}"
             v-on:click="onPointClick(item.key)"
             v-on:mousedown="onPointMousedown(item.key)"
             v-on:mouseup="onPointMouseUp(item.key)"/>
@@ -26,21 +29,55 @@ export default {
   props: {
     // 图形的元数据
     metaData: Object,
-    // 图形支持的最大节点数，当>=maxPoint时完成图形创建
-    maxPoint: Number,
-    // 最后节点与第一个节点闭合
-    closed: Boolean,
+    editModel: Boolean,
+    line: {
+      type: Boolean,
+      default: false,
+    },
+    lineStrip: {
+      type: Boolean,
+      default: false,
+    },
+    polygon: {
+      type: Boolean,
+      default: false,
+    },
+  },
+
+  data: function () {
+    return {
+      closed: false,
+    }
   },
 
   computed: {
-    /**
-     * class数据
-     */
-    classObject: function () {
-      return {
-        'label-vue-not-complete': !this.metaData.complete,
-        'label-vue-select': this.metaData.select
+    // 图形支持的最大节点数，当>=maxPoint时完成图形创建
+    maxPoint: function () {
+      if (this.line) {
+        return 2;
       }
+      return 10000;
+    },
+
+    /**
+     * polyline的class数据
+     */
+    polylineClassObject: function () {
+      return {
+        'label-vue-line': this.line,
+        'label-vue-lineStrip': this.lineStrip,
+        'label-vue-polygon': this.polygon,
+      }
+    },
+
+    /**
+     * 整个图形的class数据
+     */
+    graphClassObject: function () {
+      let obj = this.polylineClassObject;
+      obj['label-vue-edit-model'] = this.editModel;
+      obj['label-vue-select'] = this.metaData.select;
+      return obj;
     },
 
     /**
@@ -56,15 +93,19 @@ export default {
       // 已完成状态
       if (this.metaData.complete) {
         // 图形需要闭合
-        if (this.closed && res.length > 1) {
-          this.copyFirstAndSwapFirstPoint(res)
+        if (this.polygon &&
+            res.length > 1 &&
+            !this.isCopyFirstAndSwapFirstPoint(res)) {
+          this.copyFirstAndSwapFirstPoint(res);
         }
         return res;
       }
       if (res.length >= this.maxPoint) {
         // 图形需要闭合
-        if (this.closed && res.length > 1) {
-          this.copyFirstAndSwapFirstPoint(res)
+        if (this.polygon &&
+            res.length > 1 &&
+            !this.isCopyFirstAndSwapFirstPoint(res)) {
+          this.copyFirstAndSwapFirstPoint(res);
         }
         this.$emit("complete", this.metaData.key);
         return res;
@@ -106,10 +147,24 @@ export default {
     },
 
     /**
+     * 检查已经完成了闭合
+     */
+    isCopyFirstAndSwapFirstPoint: function (points) {
+      return points !== null &&
+          points !== undefined &&
+          points.length > 0 &&
+          points[0].key === -1;
+    },
+
+    /**
      * 图形选中事件处理
      */
-    onGraphClick: function () {
-      this.$emit("graphClick", this.metaData.key)
+    onGraphClick: function (event) {
+      if (event.altKey) {
+        this.$emit("graphAltClick", this.metaData.key)
+      } else {
+        this.$emit("graphClick", this.metaData.key)
+      }
     },
 
     /**

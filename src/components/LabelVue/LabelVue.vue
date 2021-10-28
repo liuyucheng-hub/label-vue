@@ -17,7 +17,7 @@ export default {
     LabelRectangle,
     LabelTextBox,
     LabelToolBar,
-    LabelList
+    LabelList,
   },
 
   props: {
@@ -43,6 +43,10 @@ export default {
       // 画板的margin值
       boarderMarginTop: null,
       boarderMarginLeft: null,
+      textBoxShow: null,
+      textBoxPositionX: null,
+      textBoxPositionY: null,
+      textBoxGraph: null,
 
       // 操作模式，创建/编辑
       model: null,
@@ -65,10 +69,26 @@ export default {
       polygons: [],
       // 所有图形对象集合
       graphs: [],
+      // 手动操作添加的图形和连接点
+      operateGraphs: []
     }
   },
 
   computed: {
+    /**
+     * 当前是创建模式
+     */
+    isCreateModel: function () {
+      return this.model === modelType.create;
+    },
+
+    /**
+     * 当前是编辑模式
+     */
+    isEditModel: function () {
+      return this.model === modelType.edit
+    },
+
     /**
      * 计算编辑框的style属性
      */
@@ -79,11 +99,13 @@ export default {
       }
     },
 
+
     /**
      * 计算board的style属性
      */
     boardStyleObject: function () {
       return {
+        'cursor': this.isCreateModel ? 'crosshair' : 'auto',
         'height': this.boardHeight + 'px',
         'width': this.boardWidth + 'px',
         'margin-top': this.boarderMarginTop + 'px',
@@ -108,7 +130,8 @@ export default {
     /**
      * 初始化board
      */
-    initBoard: function () {
+    initStatus: function () {
+      this.key = 0;
       this.boardScale = 1;
       this.fitWindowScale = 1;
       this.boardHeight = 0;
@@ -117,20 +140,10 @@ export default {
       this.boarderMarginLeft = 0;
       this.editorScrollTopRate = 0;
       this.editorScrollLeftRate = 0;
-    },
-
-    /**
-     * 当前是创建模式
-     */
-    isCreateModel: function () {
-      return this.model === modelType.create;
-    },
-
-    /**
-     * 当前是编辑模式
-     */
-    isEditModel: function () {
-      return this.model === modelType.edit
+      this.textBoxShow = false;
+      this.textBoxPositionX = 0;
+      this.textBoxPositionY = 0;
+      this.textBoxGraph = {};
     },
 
     /**
@@ -166,6 +179,16 @@ export default {
     setEditModel: function () {
       this.model = modelType.edit;
       this.selectCreateGraph = null;
+    },
+
+    setTextBoxShow: function (graph) {
+      this.textBoxShow = true;
+      this.textBoxGraph = graph;
+    },
+
+    setTextBoxHidden: function () {
+      this.textBoxGraph = {};
+      this.textBoxShow = false;
     },
 
     /**
@@ -238,7 +261,6 @@ export default {
         // 横向滑动量,等价scrollLeft / scrollWidth - clientWidth
         const scrollWidthValue = this.boardWidth * this.boardScale - this.$refs.editor.clientWidth;
         this.editorScrollLeftRate = this.$refs.editor.scrollLeft / scrollWidthValue
-        console.log("width:" + this.$refs.editor.clientWidth + ",total:" + this.boardWidth * this.boardScale + ",rate:" + this.editorScrollLeftRate);
       } else {
         this.editorScrollLeftRate = 0;
       }
@@ -260,8 +282,6 @@ export default {
           this.editorScrollTopRate = 0.5
         }
         const scrollHeightValue = this.boardHeight * this.boardScale - ele.clientHeight;
-        let val = this.editorScrollTopRate * scrollHeightValue;
-        console.log(val);
         ele.scrollTop = this.editorScrollTopRate * scrollHeightValue;
       }
       if (this.isEditorScrollLeft()) {
@@ -269,11 +289,7 @@ export default {
           this.editorScrollLeftRate = 0.5
         }
         const scrollWidthValue = this.boardWidth * this.boardScale - ele.clientWidth;
-        let val = this.editorScrollLeftRate * scrollWidthValue;
-        console.log(val);
         ele.scrollLeft = this.editorScrollLeftRate * scrollWidthValue;
-        console.log("width:" + ele.clientWidth + ",total:" + this.boardWidth * this.boardScale);
-        console.log("scrollLeft:" + ele.scrollLeft + ",rate:" + this.editorScrollLeftRate);
       }
     },
 
@@ -303,8 +319,9 @@ export default {
      * 图形的连接点同步鼠标偏移量
      */
     syncMovementPosition: function (graph, event) {
-      const mx = event.movementX / this.boardScale;
-      const my = event.movementY / this.boardScale;
+      // 高分屏幕像素比例问题
+      const mx = event.movementX / window.devicePixelRatio / this.boardScale;
+      const my = event.movementY / window.devicePixelRatio / this.boardScale;
       graph.points.forEach(p => {
         p.x += mx;
         p.y += my
@@ -372,6 +389,61 @@ export default {
     },
 
     /**
+     * 通过手动操作添加图形
+     */
+    addGraphForOperate: function (graph) {
+      this.addGraph(graph);
+      this.operateGraphs.push({
+        graph: graph
+      });
+    },
+
+    /**
+     * 添加图形
+     */
+    addGraph: function (graph) {
+      if (this.isLine(graph.type)) {
+        this.lines.push(graph)
+        this.graphs.push(graph)
+      } else if (this.isLineStrip(graph.type)) {
+        this.lineStrips.push(graph)
+        this.graphs.push(graph)
+      } else if (this.isCircle(graph.type)) {
+        this.circles.push(graph)
+        this.graphs.push(graph)
+      } else if (this.isRectangle(graph.type)) {
+        this.rectangles.push(graph)
+        this.graphs.push(graph)
+      } else if (this.isPolygon(graph.type)) {
+        this.polygons.push(graph)
+        this.graphs.push(graph)
+      }
+    },
+
+    /**
+     * 通过手动操作在图形中添加连接点
+     */
+    addPointForOperate: function (graph, point, index) {
+      this.addPoint(graph, point, index)
+      this.operateGraphs.push({
+        graph: graph,
+        point: point,
+      });
+    },
+
+    /**
+     * 图形中添加连接点
+     */
+    addPoint: function (graph, point, index) {
+      if (index !== null &&
+          index !== undefined) {
+        graph.points.splice(index + 1, 0, point)
+      } else {
+        graph.points.push(point)
+      }
+    },
+
+    /**
      * 删除一个图形
      */
     deleteGraph: function (graph) {
@@ -397,6 +469,26 @@ export default {
       }
       this.graphs = this.graphs
           .filter(item => item.key !== graph.key)
+
+      if (this.selectGraph === graph) {
+        this.selectGraph = null;
+      }
+    },
+
+    /**
+     * 删除图形中的一个连接点
+     */
+    deletePoint: function (graph, point) {
+      if (graph.points.length <= 1) {
+        this.deleteGraph(graph);
+      } else {
+        graph.points = graph.points
+            .filter(item => item.key !== point.key);
+      }
+
+      if (this.selectPoint === point) {
+        this.selectPoint = null;
+      }
     },
 
     /**
@@ -405,8 +497,11 @@ export default {
      * 2.清除已选择图形、连接点
      */
     completeSelectGraph: function () {
-      if (this.selectGraph !== null) {
+      if (this.selectGraph !== null &&
+          this.selectGraph !== undefined &&
+          !this.selectGraph.complete) {
         this.selectGraph.complete = true;
+        this.setTextBoxShow(this.selectGraph);
       }
       this.clearSelectGraphAndPoint();
     },
@@ -432,30 +527,15 @@ export default {
      */
     genNewGraph: function (event) {
       if (this.isLine(this.selectCreateGraph)) {
-        const newLine = this.genNewLine(event);
-        this.selectGraph = newLine;
-        this.lines.push(newLine)
-        this.graphs.push(newLine)
+        return this.genNewLine(event);
       } else if (this.isLineStrip(this.selectCreateGraph)) {
-        const newLineStrip = this.genNewLineStrip(event);
-        this.selectGraph = newLineStrip;
-        this.lineStrips.push(newLineStrip)
-        this.graphs.push(newLineStrip)
+        return this.genNewLineStrip(event);
       } else if (this.isCircle(this.selectCreateGraph)) {
-        const newCircle = this.genNewCircle(event);
-        this.selectGraph = newCircle;
-        this.circles.push(newCircle)
-        this.graphs.push(newCircle)
+        return this.genNewCircle(event);
       } else if (this.isRectangle(this.selectCreateGraph)) {
-        const newRectangle = this.genNewRectangle(event);
-        this.selectGraph = newRectangle;
-        this.rectangles.push(newRectangle)
-        this.graphs.push(newRectangle)
+        return this.genNewRectangle(event);
       } else if (this.isPolygon(this.selectCreateGraph)) {
-        const newPolygon = this.genNewPolygon(event);
-        this.selectGraph = newPolygon;
-        this.polygons.push(newPolygon)
-        this.graphs.push(newPolygon)
+        return this.genNewPolygon(event);
       }
     },
 
@@ -470,6 +550,8 @@ export default {
         complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
+        tag: '',
+        content: '',
       }
     },
 
@@ -484,6 +566,8 @@ export default {
         complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
+        tag: '',
+        content: '',
       }
     },
 
@@ -498,6 +582,8 @@ export default {
         complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
+        tag: '',
+        content: '',
       }
     },
 
@@ -512,6 +598,8 @@ export default {
         complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
+        tag: '',
+        content: '',
       }
     },
 
@@ -526,6 +614,8 @@ export default {
         complete: false,
         points: [this.genPoint(event)],
         position: this.genPoint(event),
+        tag: '',
+        content: '',
       }
     },
 
@@ -540,13 +630,6 @@ export default {
       this.syncPosition(p, event)
 
       return p;
-    },
-
-    /**
-     * 重置key
-     */
-    resetKey: function () {
-      this.key = 0;
     },
 
     /**
@@ -575,17 +658,17 @@ export default {
      * 鼠标移动事件处理
      */
     onMousemove: function (event) {
-      if (this.isCreateModel()) {
-        this.onMouseMoveForCreateModel(event);
-      } else if (this.isEditModel()) {
-        this.onMouseMoveForEditModel(event)
+      if (this.isCreateModel) {
+        this.onMousemoveForCreateModel(event);
+      } else if (this.isEditModel) {
+        this.onMousemoveForEditModel(event)
       }
     },
 
     /**
      * 创建模式下鼠标移动事件处理
      */
-    onMouseMoveForCreateModel: function (event) {
+    onMousemoveForCreateModel: function (event) {
       if (this.selectGraph !== null &&
           this.selectGraph !== undefined) {
         this.syncPosition(this.selectGraph.position, event)
@@ -595,7 +678,7 @@ export default {
     /**
      * 编辑模式下鼠标移动事件处理
      */
-    onMouseMoveForEditModel: function (event) {
+    onMousemoveForEditModel: function (event) {
       // 优先移动点
       if (this.dragPoint !== null &&
           this.dragPoint !== undefined) {
@@ -611,44 +694,49 @@ export default {
     /**
      * 鼠标单击事件处理
      */
-    onMouseSingleClick: function (event) {
-      if (this.isCreateModel()) {
-        this.onMouseSingleClickForCreateModel(event);
+    onMouseClick: function (event) {
+      if (this.isCreateModel) {
+        this.onMouseClickForCreateModel(event);
       }
-      if (this.isEditModel()) {
-        this.onMouseSingleClickForEditModel(event);
+      if (this.isEditModel) {
+        this.onMouseClickForEditModel(event);
       }
     },
 
     /**
      * 创建模式下鼠标单击事件处理
      */
-    onMouseSingleClickForCreateModel: function (event) {
+    onMouseClickForCreateModel: function (event) {
       if (this.selectGraph === null ||
           this.selectGraph === undefined) {
         // 没有正在处理的图形对象
-        this.genNewGraph(event);
+        let newGraph = this.genNewGraph(event);
+        this.selectGraph = newGraph;
+        this.addGraphForOperate(newGraph);
       } else {
         // 有正在处理的图形对象
-        this.selectGraph.points.push(
-            this.genPoint(event)
-        )
+        this.addPointForOperate(this.selectGraph, this.genPoint(event))
       }
     },
 
     /**
      * 编辑模式下鼠标单击事件处理
      */
-    onMouseSingleClickForEditModel: function (event) {
+    onMouseClickForEditModel: function (event) {
+      // 在已选择连接点的前面添加连接点
       if (this.selectGraph !== null &&
           this.selectGraph !== undefined &&
           this.selectPoint !== null &&
           this.selectPoint !== undefined &&
-          event.altKey) {
+          event.ctrlKey) {
         const index = this.selectGraph.points.indexOf(this.selectPoint);
         if (index > -1) {
           const newPoint = this.genPoint(event);
-          this.selectGraph.points.splice(index + 1, 0, newPoint)
+          this.addPointForOperate(this.selectGraph, newPoint, index)
+          // 以新建立的节点为基点
+          this.selectPoint.select = false;
+          newPoint.select = true;
+          this.selectPoint = newPoint;
         }
       }
     },
@@ -666,7 +754,7 @@ export default {
      * 图形点击事件处理
      */
     onGraphClick: function (graphKey) {
-      if (this.isCreateModel()) {
+      if (this.isCreateModel) {
         return;
       }
 
@@ -681,8 +769,21 @@ export default {
       this.selectGraph = matchGraph;
     },
 
+    /**
+     * 显示标注文本框
+     */
+    onGraphAltClick: function (graphKey) {
+      if (this.isEditModel) {
+        this.onGraphClick(graphKey);
+        if (this.selectGraph !== null &&
+            this.selectGraph !== undefined) {
+          this.setTextBoxShow(this.selectGraph);
+        }
+      }
+    },
+
     onGraphDragStart: function (graphKey) {
-      if (this.isCreateModel()) {
+      if (this.isCreateModel) {
         return;
       }
 
@@ -696,7 +797,7 @@ export default {
     },
 
     onGraphDragEnd: function (graphKey) {
-      if (this.isCreateModel()) {
+      if (this.isCreateModel) {
         return;
       }
 
@@ -713,7 +814,7 @@ export default {
      * 图形的连接点点击事件处理
      */
     onPointClick: function (graphKey, pointKey) {
-      if (this.isCreateModel()) {
+      if (this.isCreateModel) {
         return;
       }
 
@@ -740,7 +841,7 @@ export default {
      * 图形连接点开始拖动事件处理
      */
     onPointDragStart: function (graphKey, pointKey) {
-      if (this.isCreateModel()) {
+      if (this.isCreateModel) {
         return;
       }
 
@@ -763,7 +864,7 @@ export default {
      * 图形连接点完成拖动事件处理
      */
     onPointDragEnd: function (graphKey, pointKey) {
-      if (this.isCreateModel()) {
+      if (this.isCreateModel) {
         return;
       }
 
@@ -787,6 +888,13 @@ export default {
      */
     onComplete: function () {
       this.completeSelectGraph();
+    },
+
+    /**
+     * textBox点击确认按钮
+     */
+    onTextBoxOK: function () {
+      this.setTextBoxHidden();
     },
 
     /**
@@ -814,6 +922,12 @@ export default {
         } else if (event.key === '5') {
           this.onCreateCircle();
         }
+        if (event.key === '+') {
+          this.onZoomIn();
+        }
+        if (event.key === '-') {
+          this.onZoomOut();
+        }
       } else if (event.key === 'Delete') {
         this.onDelete();
       } else if (event.key === 'Enter') {
@@ -825,36 +939,15 @@ export default {
      * 撤销操作处理
      */
     onRevoke: function () {
-      if (this.isCreateModel()) {
-        this.onRevokeForCreateModel();
-      } else if (this.isEditModel()) {
-        this.onRevokeForEditModel();
-      }
-    },
-
-    /**
-     * 创建模式下撤销操作处理
-     */
-    onRevokeForCreateModel: function () {
-      if (this.selectGraph === null ||
-          this.selectGraph === undefined) {
+      let lastOperate = this.operateGraphs.pop();
+      if (lastOperate === null || lastOperate === undefined) {
         return;
       }
 
-      // 正在创建图形仅有一个点，删除当前图形，其余情况删除最后一个点
-      if (this.selectGraph.points.length > 1) {
-        this.selectGraph.points.pop()
+      if (lastOperate.point !== null && lastOperate.point !== undefined) {
+        this.deletePoint(lastOperate.graph, lastOperate.point)
       } else {
-        this.deleteLastGraph(this.selectGraph.type);
-      }
-    },
-
-    /**
-     * 编辑模式下撤销操作处理
-     */
-    onRevokeForEditModel: function () {
-      if (this.graphs.length > 0) {
-        this.deleteLastGraph(this.graphs[this.graphs.length - 1].type)
+        this.deleteGraph(lastOperate.graph)
       }
     },
 
@@ -862,7 +955,7 @@ export default {
      * 删除操作处理
      */
     onDelete: function () {
-      if (this.isEditModel()) {
+      if (this.isEditModel) {
         this.onDeleteForEditModel();
       }
     },
@@ -873,19 +966,11 @@ export default {
     onDeleteForEditModel: function () {
       // 优先point
       if (this.selectPoint !== null) {
-        // 图形只有一个节点时删除图形，有多个节点时删除对应节点
-        if (this.selectGraph.points.length <= 1) {
-          this.deleteGraph(this.selectGraph);
-          this.selectGraph = null;
-        } else {
-          this.selectGraph.points =
-              this.selectGraph.points.filter(item => item.key !== this.selectPoint.key);
-        }
+        this.deletePoint(this.selectGraph, this.selectPoint);
         return;
       }
       if (this.selectGraph !== null) {
         this.deleteGraph(this.selectGraph);
-        this.selectGraph = null;
       }
     },
 
@@ -893,7 +978,7 @@ export default {
      * 创建线条操作处理
      */
     onCreateLine: function () {
-      if (this.isCreateModel() &&
+      if (this.isCreateModel &&
           this.isLine(this.selectCreateGraph)) {
         return;
       }
@@ -905,7 +990,7 @@ export default {
      * 创建连线操作处理
      */
     onCreateLineStrip: function () {
-      if (this.isCreateModel() &&
+      if (this.isCreateModel &&
           this.isLineStrip(this.selectCreateGraph)) {
         return;
       }
@@ -917,7 +1002,7 @@ export default {
      * 创建圆形操作处理
      */
     onCreateCircle: function () {
-      if (this.isCreateModel() &&
+      if (this.isCreateModel &&
           this.isCircle(this.selectCreateGraph)) {
         return;
       }
@@ -929,7 +1014,7 @@ export default {
      * 创建矩形操作处理
      */
     onCreateRectangle: function () {
-      if (this.isCreateModel() &&
+      if (this.isCreateModel &&
           this.isRectangle(this.selectCreateGraph)) {
         return;
       }
@@ -941,7 +1026,7 @@ export default {
      * 创建多边形操作处理
      */
     onCreatePolygon: function () {
-      if (this.isCreateModel() &&
+      if (this.isCreateModel &&
           this.isPolygon(this.selectCreateGraph)) {
         return;
       }
@@ -997,9 +1082,8 @@ export default {
   },
 
   created() {
-    this.resetKey();
     this.registerHotKey();
-    this.initBoard();
+    this.initStatus();
   },
 
   destroyed() {
