@@ -54,7 +54,7 @@ export default {
 
 <style scoped>
 #label-vue-text-box {
-  position: absolute;
+  position: fixed;
   z-index: 99999;
   width: 400px;
   padding: 10px 0;
@@ -92,14 +92,13 @@ export default {
   position: relative;
   display: inline-block;
   text-align: center;
-  border: 1px solid transparent;
+  border: 1px solid #d9d9d9;
   box-shadow: 0 2px #00000004;
   cursor: pointer;
   padding: 4px 15px;
   font-size: 12px;
   border-radius: 2px;
   color: #000000d9;
-  border-color: #d9d9d9;
   background: #fff;
 }
 

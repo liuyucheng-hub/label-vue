@@ -43,6 +43,9 @@ export default {
       // 画板的margin值
       boarderMarginTop: null,
       boarderMarginLeft: null,
+      // textBox相关属性
+      mouseClientX: null,
+      mouseClientY: null,
       textBoxShow: null,
       textBoxPositionX: null,
       textBoxPositionY: null,
@@ -181,11 +184,19 @@ export default {
       this.selectCreateGraph = null;
     },
 
+    /**
+     * 弹出TextBox
+     */
     setTextBoxShow: function (graph) {
       this.textBoxShow = true;
       this.textBoxGraph = graph;
+      this.textBoxPositionX = this.mouseClientX;
+      this.textBoxPositionY = this.mouseClientY;
     },
 
+    /**
+     * 隐藏TextBox
+     */
     setTextBoxHidden: function () {
       this.textBoxGraph = {};
       this.textBoxShow = false;
@@ -503,7 +514,6 @@ export default {
         this.selectGraph.complete = true;
         this.setTextBoxShow(this.selectGraph);
       }
-      this.clearSelectGraphAndPoint();
     },
 
     /**
@@ -658,6 +668,8 @@ export default {
      * 鼠标移动事件处理
      */
     onMousemove: function (event) {
+      this.mouseClientX = event.clientX;
+      this.mouseClientY = event.clientY;
       if (this.isCreateModel) {
         this.onMousemoveForCreateModel(event);
       } else if (this.isEditModel) {
@@ -708,7 +720,8 @@ export default {
      */
     onMouseClickForCreateModel: function (event) {
       if (this.selectGraph === null ||
-          this.selectGraph === undefined) {
+          this.selectGraph === undefined ||
+          this.selectGraph.complete) {
         // 没有正在处理的图形对象
         let newGraph = this.genNewGraph(event);
         this.selectGraph = newGraph;
@@ -888,6 +901,7 @@ export default {
      */
     onComplete: function () {
       this.completeSelectGraph();
+      this.clearSelectGraphAndPoint();
     },
 
     /**
@@ -901,6 +915,7 @@ export default {
      * hotKey事件处理
      */
     onHotKey: function (event) {
+      console.log(event)
       // Delete: 删除操作 ctrl+z: 撤销操作 alt+`: 编辑模式
       // alt+1: 创建矩形 alt+2: 创建多边形 alt+3: 创建线条
       // alt+4: 创建连线 alt+5: 创建圆形 enter: 创建完成
@@ -931,7 +946,7 @@ export default {
       } else if (event.key === 'Delete') {
         this.onDelete();
       } else if (event.key === 'Enter') {
-        this.completeSelectGraph()
+        this.onComplete();
       }
     },
 
@@ -983,7 +998,7 @@ export default {
         return;
       }
       this.setCreateModel(graphType.line)
-      this.completeSelectGraph();
+      this.clearSelectGraphAndPoint();
     },
 
     /**
@@ -995,7 +1010,7 @@ export default {
         return;
       }
       this.setCreateModel(graphType.lineStrip)
-      this.completeSelectGraph();
+      this.clearSelectGraphAndPoint();
     },
 
     /**
@@ -1007,7 +1022,7 @@ export default {
         return;
       }
       this.setCreateModel(graphType.circle)
-      this.completeSelectGraph();
+      this.clearSelectGraphAndPoint();
     },
 
     /**
@@ -1019,7 +1034,7 @@ export default {
         return;
       }
       this.setCreateModel(graphType.rectangle)
-      this.completeSelectGraph();
+      this.clearSelectGraphAndPoint();
     },
 
     /**
@@ -1031,31 +1046,32 @@ export default {
         return;
       }
       this.setCreateModel(graphType.polygon)
-      this.completeSelectGraph();
+      this.clearSelectGraphAndPoint();
     },
 
     /**
      * 编辑操作处理
      */
     onEdit: function () {
+      if (this.isEditModel) {
+        return;
+      }
       this.setEditModel();
-      this.completeSelectGraph();
+      this.clearSelectGraphAndPoint();
     },
 
     /**
      * 放大画板
      */
     onZoomIn: function () {
-      this.setBoardScale(this.boardScale + 0.25)
+      this.setBoardScale(this.boardScale * 1.25)
     },
 
     /**
      * 缩小画板
      */
     onZoomOut: function () {
-      if (this.boardScale - 0.25 > 0) {
-        this.setBoardScale(this.boardScale - 0.25)
-      }
+      this.setBoardScale(this.boardScale / 1.25)
     },
 
     /**
@@ -1076,7 +1092,6 @@ export default {
      * 保存操作处理
      */
     onSave: function () {
-      this.completeSelectGraph();
       console.log(this.graphs);
     },
   },
